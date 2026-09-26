@@ -36,7 +36,7 @@ function renderAll(el: HTMLElement): void {
   const body = el.querySelector('#ae-body') as HTMLElement;
   if (!g) {
     body.innerHTML = `<div class="of-card"><div class="of-h2">尚未开局</div>
-      <div class="of-hint">点「初始化开局存档」写入开局档（主角力敏体8/智11、审判广场开局、四时钟归零）。</div></div>`;
+      <div class="of-hint">点「快速初始化（默认属性）」写入开局档（主角力敏体 8、智 11，审判广场开局，时钟归零）。</div></div>`;
   } else {
     body.innerHTML = 渲染状态(g);
   }

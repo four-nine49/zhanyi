@@ -159,12 +159,22 @@ export interface 数据AI结果 {
   raw?: string;
 }
 
-/** 调用数据AI并校验。失败（API错/JSON坏/契约拒）返回 ok:false。 */
-export async function runDataAI(g: Game): Promise<数据AI结果> {
+/**
+ * 组装数据AI 最终提示词（与 runDataAI 完全同路：同取正文、同占位符、同宏替换）。
+ * 抽出供「战役·提示词」页做「最终提示词预览」——预览即实发，不会与真实调用脱节。
+ */
+export function 组装数据AI提示词(g: Game): { role: string; content: string }[] {
   const settings = loadSettings();
   const segments = settings.提示词.数据AI;
+  const f = settings.正文过滤;
 
-  const 正文L = recentStoryLayered(4);
+  // 逐轮取正文：按设置的「轮数」取（1 轮 = 用户输入 + 一条 AI 回复），再过标签过滤 / 每轮上限
+  const 正文L = recentStoryLayered(f.轮数, {
+    extractTags: f.提取标签,
+    excludeTags: f.排除标签,
+    maxCharsPerRound: f.每轮字符上限,
+  });
+
   const 正文 = '【前文背景（仅供参考因果，严禁在此提取结算项目）】\n'
     + (正文L.bg || '（无）')
     + '\n\n【本轮待结算正文（唯一提取源）】\n'
@@ -176,7 +186,13 @@ export async function runDataAI(g: Game): Promise<数据AI结果> {
   };
 
   // 组装 + 宏替换（复用渐变带 ai-common 的组装函数）
-  const ordered = 组装提示词(segments, vars).map(s => ({ role: s.role, content: substituteParams(s.content) }));
+  return 组装提示词(segments, vars).map(s => ({ role: s.role, content: substituteParams(s.content) }));
+}
+
+/** 调用数据AI并校验。失败（API错/JSON坏/契约拒）返回 ok:false。 */
+export async function runDataAI(g: Game): Promise<数据AI结果> {
+  const settings = loadSettings();
+  const ordered = 组装数据AI提示词(g);
 
   try {
     const r = await callGenerate({

@@ -14,7 +14,7 @@ import { startAutoFill, stopAutoFill, resetFloorCount } from './schedule/trigger
 import { initAutoSyncIfEnabled } from './sync/message-sync';
 import { initStatusPlaceholderIfEnabled } from './sync/status-placeholder';
 import { loadSettings as loadBusinessSettings } from './store/settings';
-import { mountApp, refreshCurrent } from './ui/app';
+import { mountApp, refreshCurrent, 锁定模式 } from './ui/app';
 import { initGradband, destroyGradband } from './gradband/index';
 import { initAiselan, destroyAiselan } from './aiselan/index';
 
@@ -57,10 +57,14 @@ async function doInitialize(): Promise<void> {
   }).stop);
 
   // 6. 启动自动填表 / 自动数据同步 / 状态栏标记 / 渐变带 + 艾瑟兰战役业务（按设置；各自由存档存在与否静默把关）
+  //    锁定战役模式时，标准表格那一套（填表/开局框架同步/状态栏标记）在战役里用不到，不启动——
+  //    避免无用的后台监听，也避免它与战役自己的 <StatusPlaceHolderImpl/> 标记出现「同标记两来源」。
   const settings = loadBusinessSettings();
-  if (settings.autoFillEnabled) startAutoFill();
-  initAutoSyncIfEnabled();
-  initStatusPlaceholderIfEnabled();
+  if (锁定模式 !== 'aiselan') {
+    if (settings.autoFillEnabled) startAutoFill();
+    initAutoSyncIfEnabled();
+    initStatusPlaceholderIfEnabled();
+  }
   void initGradband();
   void initAiselan();
 

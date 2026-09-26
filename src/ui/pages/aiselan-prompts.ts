@@ -1,24 +1,89 @@
-// ui/pages/aiselan-prompts.ts — 艾瑟兰战役 提示词编辑页（数据AI 一套）
+// ui/pages/aiselan-prompts.ts — 艾瑟兰战役 提示词编辑页（数据AI 一套）+ 最终提示词预览
 //
 // 交互与渐变带提示词页一致：ON/OFF、↑↓、删除、新增、恢复默认。占位符：{{状态}} {{正文}}
+// 「最终提示词预览」用真实存档 + 最近正文拼装（占位符已替换），与数据AI 实际收到的完全一致。
 import { loadSettings, saveSettings, 默认提示词, type Settings } from '../../aiselan/core/settings';
+import { loadGame } from '../../aiselan/core/store';
+import { 组装数据AI提示词 } from '../../aiselan/pipeline/data-ai';
 
 const WHICH = '数据AI' as const;
 
+function esc(s: unknown): string {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string));
+}
+
 export function renderAiselanPromptsPage(el: HTMLElement): void {
+  const state: { flush: () => void } = { flush: () => { /* 由分组渲染填入 */ } };
+
   el.innerHTML = `<div style="padding:16px">
     <div class="of-h1">艾瑟兰战役 · 提示词</div>
     <div class="of-hint" style="margin-bottom:12px">数据AI 一套（读正文 → 输出增量变更包）。<b>ON/OFF</b> 控制这段发不发，↑↓ 调顺序，可删可加、可恢复默认。
-      可用占位符：<code>{{状态}}</code>（当前状态摘要）、<code>{{正文}}</code>（分层正文），以及酒馆原生宏 <code>{{user}}</code> <code>{{char}}</code> 等；
-      写错成别的名字不会被替换（会原样发给 AI），改完可跑 <code>node scripts/show-data-ai-prompt.mjs</code> 对照实际效果。</div>
+      可用占位符：<code>{{状态}}</code>（上一轮状态·本回合开始前的基线摘要）、<code>{{正文}}</code>（分层正文），以及酒馆原生宏 <code>{{user}}</code> <code>{{char}}</code> 等；
+      写错成别的名字不会被替换（会原样发给 AI）。改完点下方「生成预览」可看到实际发出的内容。</div>
+
+    <div class="of-card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div class="of-h2" style="margin:0">最终提示词预览</div>
+        <span class="of-hint" style="font-size:11px">用当前存档 + 最近正文真实拼装，占位符已替换</span>
+        <button class="of-btn of-btn-sm" id="ae-pg-preview" style="margin-left:auto">生成预览</button>
+        <button class="of-btn of-btn-ghost of-btn-sm" id="ae-pg-copy" disabled>复制</button>
+      </div>
+      <div class="of-hint" style="font-size:11px;margin-top:4px">读的是<b>已保存</b>的提示词与「战役·设置 → 正文取用」的规则；改完分段内容点一下别处（失焦即存）再生成即可。</div>
+      <div id="ae-pg-preview-box" class="of-hint" style="margin-top:8px;font-size:12px">点「生成预览」查看数据AI 实际会收到的完整内容。</div>
+    </div>
+
     <div id="ae-pg-group"></div>
   </div>`;
 
   const groupsEl = el.querySelector('#ae-pg-group') as HTMLElement;
-  renderGroup(groupsEl);
+  bindPreview(el, state);
+  renderGroup(groupsEl, state);
 }
 
-function renderGroup(root: HTMLElement): void {
+/* ── 最终提示词预览 ── */
+function bindPreview(el: HTMLElement, state: { flush: () => void }): void {
+  const btn = el.querySelector('#ae-pg-preview') as HTMLButtonElement;
+  const copyBtn = el.querySelector('#ae-pg-copy') as HTMLButtonElement;
+  const box = el.querySelector('#ae-pg-preview-box') as HTMLElement;
+  let 最近一次 = '';
+
+  btn.addEventListener('click', () => {
+    state.flush();                       // 先把提示词改动落盘，保证「预览 = 实发」
+    const g = loadGame();
+    if (!g) {
+      box.innerHTML = '<b>尚未初始化存档</b>：先到「艾瑟兰战役」页初始化开局，再生成预览。';
+      copyBtn.disabled = true; 最近一次 = '';
+      return;
+    }
+    let ordered: { role: string; content: string }[] = [];
+    try { ordered = 组装数据AI提示词(g); }
+    catch (e) { box.innerHTML = '组装失败：' + esc((e as Error).message); copyBtn.disabled = true; 最近一次 = ''; return; }
+
+    let total = 0;
+    const parts = ordered.map((s, i) => {
+      total += s.content.length;
+      return `<div style="margin-bottom:10px">
+        <div class="of-hint" style="font-size:11px;margin-bottom:2px">[${i + 1}/${ordered.length}] role=${s.role} · ${s.content.length} 字符</div>
+        <pre style="white-space:pre-wrap;word-break:break-word;background:rgba(255,255,255,.04);border:1px solid #313244;border-radius:6px;padding:8px;margin:0;font-size:12px;line-height:1.6;max-height:340px;overflow:auto">${esc(s.content)}</pre>
+      </div>`;
+    }).join('');
+    最近一次 = ordered.map(s => s.content).join('\n\n');
+    box.innerHTML = `<div class="of-hint" style="font-size:11px;margin-bottom:8px">共 ${ordered.length} 段 · 合计 ${total} 字符（≈ ${Math.round(total / 1.6)} tokens 中文估算）· 正文按当前「正文取用」设置（轮数 / 每轮上限 / 标签）取用</div>${parts}`;
+    copyBtn.disabled = false;
+  });
+
+  copyBtn.addEventListener('click', () => {
+    if (!最近一次) return;
+    const clip = (globalThis as any).navigator?.clipboard;
+    if (!clip?.writeText) { toastr?.warning?.('当前环境不支持自动复制，请手动选中文本复制'); return; }
+    clip.writeText(最近一次).then(
+      () => toastr?.success?.('已复制完整提示词'),
+      () => toastr?.warning?.('复制失败，请手动选中文本复制'),
+    );
+  });
+}
+
+function renderGroup(root: HTMLElement, state: { flush: () => void }): void {
   const s = loadSettings();
   const segs = s.提示词[WHICH].map(x => ({ ...x }));
   const wrap = document.createElement('div');
@@ -65,6 +130,7 @@ function renderGroup(root: HTMLElement): void {
     saveSettings(cur);
     toastr?.success?.(`已保存 ${WHICH} 提示词`);
   }
+  state.flush = save;   // 供「生成预览」先把改动落盘
 
   segsEl.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;

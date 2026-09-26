@@ -14,6 +14,13 @@ export interface Settings {
   频率: { 数据AI: number };  // 每N条AI回复一次，默认1
   api: { 数据AI: ApiConfig };
   提示词: { 数据AI: PromptSegment[] };
+  /** 取正文发给数据AI 前的取用规则（轮数 / 每轮上限 / 标签过滤） */
+  正文过滤: {
+    轮数: number;          // 取最近几轮正文，1 轮 = 用户输入 + 一条 AI 回复；默认 4
+    提取标签: string;      // "开始|结束" 多对换行分隔；留空=不过滤，整段正文都发
+    排除标签: string;      // 把「开始|结束」之间的内容删掉（如思考块）
+    每轮字符上限: number;  // 每轮正文最多发多少字符，默认 3000
+  };
   窗口?: { x: number; y: number; w: number; h: number };
   悬浮球?: { x: number; y: number };
 }
@@ -169,6 +176,7 @@ export function 默认设置(): Settings {
     频率: { 数据AI: 1 },
     api: { 数据AI: { mode: 'tavern' } },
     提示词: 默认提示词(),
+    正文过滤: { 轮数: 4, 提取标签: '', 排除标签: '', 每轮字符上限: 3000 },
   };
 }
 
@@ -186,6 +194,14 @@ export function loadSettings(): Settings {
     频率: { 数据AI: (raw.频率 && typeof raw.频率.数据AI === 'number' ? raw.频率.数据AI : def.频率.数据AI) },
     api: { 数据AI: raw.api?.数据AI ?? def.api.数据AI },
     提示词: { 数据AI: raw.提示词?.数据AI ?? def.提示词.数据AI },
+    正文过滤: {
+      轮数: typeof raw.正文过滤?.轮数 === 'number' && raw.正文过滤.轮数 > 0
+        ? Math.round(raw.正文过滤.轮数) : def.正文过滤.轮数,
+      提取标签: typeof raw.正文过滤?.提取标签 === 'string' ? raw.正文过滤.提取标签 : def.正文过滤.提取标签,
+      排除标签: typeof raw.正文过滤?.排除标签 === 'string' ? raw.正文过滤.排除标签 : def.正文过滤.排除标签,
+      每轮字符上限: typeof raw.正文过滤?.每轮字符上限 === 'number' && raw.正文过滤.每轮字符上限 > 0
+        ? Math.round(raw.正文过滤.每轮字符上限) : def.正文过滤.每轮字符上限,
+    },
     窗口: raw.窗口,
     悬浮球: raw.悬浮球,
   };

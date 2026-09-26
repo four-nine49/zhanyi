@@ -64,7 +64,7 @@ export function createWindow(): HTMLElement {
   // 窗口内容（标题栏 + 内容区 + 缩放手柄）
   win.innerHTML = `
     <div class="of-window-titlebar" id="${DOM_IDS.titlebar}">
-      <span class="of-window-title">🎬 艾瑟兰战役</span>
+      <span class="of-window-title">⚔ 艾瑟兰战役</span>
       <button class="of-window-close" id="of-window-close" title="关闭">✕</button>
     </div>
     <div class="of-window-content" id="${DOM_IDS.content}"></div>

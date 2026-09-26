@@ -1,15 +1,21 @@
 // ui/pages/settings.ts — 设置页：界面（悬浮按钮）+ 引导对话 API + 全局默认 + 调度（全字段带中文解释）
 // （填表 API 与渐变带 数据AI/法术AI 的 API 配置已移至独立「API」页 ui/pages/api.ts）
+//
+// 按模式分段：战役模式下只有「界面」段与战役通用——引导对话 API / 全局默认 / 调度都属
+// 「剑与汽水·开局框架」标准表格，战役不用，故不渲染；战役自己的设置看「战役·设置」页。
 import { loadSettings, saveSetting, saveSettingsPatch } from '../../core/settings';
 import { updateDialogueApi } from '../../store/settings';
 import { setToggleVisible } from '../../window/toggle';
 import { resetGuidedEngine } from '../state';
 import { startAutoFill, stopAutoFill } from '../../schedule/trigger';
+import { currentMode } from '../app';
 
 export function renderSettingsPage(el: HTMLElement): void {
   const s = loadSettings();
   const da = s.dialogueApi;
   const g = s.globalDefaults;
+  const 战役模式 = currentMode() === 'aiselan';
+
   el.innerHTML = `<div style="padding:16px;max-width:680px">
     <div class="of-h2" style="color:#89b4fa">界面</div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:8px">
@@ -17,6 +23,9 @@ export function renderSettingsPage(el: HTMLElement): void {
     </label>
     <div class="of-hint">关掉后仍可用 /opening 命令或在酒馆扩展设置里恢复。</div>
 
+    ${战役模式 ? `
+    <div class="of-hint" style="margin-top:20px">本模式（战役）的结算开关、数据AI 频率与数据AI API 在「战役·设置」页配置；这里只保留通用界面项。</div>
+    ` : `
     <div class="of-h2" style="color:#89b4fa;margin-top:20px">引导对话 API（开局引导的 AI）</div>
     <div class="of-hint">「AI 对话」页里陪你做开局引导的 AI，和填表 API 相互独立。默认直接用酒馆当前连接的 API；想用别的模型就切「自定义」。</div>
     <select class="of-select" id="of-d-mode" style="margin-top:8px;max-width:280px">
@@ -73,9 +82,10 @@ export function renderSettingsPage(el: HTMLElement): void {
 
     <div class="of-h2" style="color:#89b4fa;margin-top:20px">调度</div>
     <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input type="checkbox" id="of-s-auto" ${s.autoFillEnabled ? 'checked' : ''}> 启用标准表格（自动填表）</label>
-    <div class="of-hint">默认开启。关掉后标准数据表格不再自动填表（可手动填）；仅影响开局框架标准表，与「渐变带的数据AI/法术AI」无关。</div>
+    <div class="of-hint">默认开启。关掉后标准数据表格不再自动填表（可手动填）；仅影响开局框架标准表，与「渐变带的数据AI/法术AI」和「战役数据AI」无关。</div>
     <label class="of-label" style="margin-top:12px">失败重试次数</label><input class="of-input" type="number" id="of-s-retry" value="${s.maxRetries}" style="width:120px">
     <div class="of-hint">某次请求失败时静默重试几次，填 0 = 不重试。</div>
+    `}
   </div>`;
 
   // ── 界面：悬浮按钮 ──
@@ -85,6 +95,9 @@ export function renderSettingsPage(el: HTMLElement): void {
     setToggleVisible(toggleCb.checked);
     toastr?.info?.(toggleCb.checked ? '已显示悬浮按钮' : '已隐藏悬浮按钮（可在酒馆扩展设置里恢复）');
   });
+
+  // 战役模式：以下三段不渲染，直接结束
+  if (战役模式) return;
 
   // ── 填表 API 已移至「API」页（ui/pages/api.ts）──
 

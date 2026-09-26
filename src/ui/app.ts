@@ -2,7 +2,7 @@
 //
 // 样式不在这里注入：dist/index.css 由 manifest 的 css 字段注入主页面（指南 1.2）。
 // 挂载点 = 窗口内容区（window/window.ts 的 #of-content）。
-// 模式：presets（剑与汽水）/ gradband（渐变带）——按模式过滤侧栏，避免标签太多太乱。
+// 模式：presets（剑与汽水）/ gradband（渐变带）/ aiselan（艾瑟兰战役）——按模式过滤侧栏，避免标签太多太乱。
 import { renderStartPage } from './pages/start';
 import { renderPresetPage } from './pages/preset-opening';
 import { renderJianbandaiPage } from './pages/jianbandai-opening';
@@ -11,6 +11,7 @@ import { renderGradbandPromptsPage } from './pages/gradband-prompts';
 import { renderGradbandDataPage } from './pages/gradband-data';
 import { renderAiselanPage } from './pages/aiselan';
 import { renderAiselanPromptsPage } from './pages/aiselan-prompts';
+import { renderAiselanSettingsPage } from './pages/aiselan-settings';
 import { renderChatPage } from './pages/chat';
 import { renderTablesPage } from './pages/tables';
 import { renderSheetConfigPage } from './pages/sheet-config';
@@ -55,13 +56,13 @@ export const PAGES: PageDef[] = [
   { name: 'tools', label: '工具', order: 90, render: renderToolsPage, modes: ['gradband'] },
 
   // ── 艾瑟兰战役模式 ──
+  // 面板锁定战役时，非战役页面（表格数据/表结构/API/工具）一律不进侧栏：
+  // 它们全是「剑与汽水·开局框架」标准表格或「渐变带」的入口，战役用不到。
+  // 页面代码全部保留，切回其它模式照常显示。
   { name: 'aiselan', label: '艾瑟兰战役', order: 6, render: renderAiselanPage, modes: ['aiselan'] },
   { name: 'aiselan-prompts', label: '战役·提示词', order: 7, render: renderAiselanPromptsPage, modes: ['aiselan'] },
-  { name: 'tables', label: '表格数据', order: 20, render: renderTablesPage, modes: ['aiselan'] },
-  { name: 'sheetconf', label: '表结构/配置', order: 30, render: renderSheetConfigPage, modes: ['aiselan'] },
-  { name: 'api', label: 'API', order: 35, render: renderApiPage, modes: ['aiselan'] },
+  { name: 'aiselan-settings', label: '战役·设置', order: 8, render: renderAiselanSettingsPage, modes: ['aiselan'] },
   { name: 'settings', label: '设置', order: 40, render: renderSettingsPage, modes: ['aiselan'] },
-  { name: 'tools', label: '工具', order: 90, render: renderToolsPage, modes: ['aiselan'] },
 ];
 
 let currentName = 'start';
@@ -73,10 +74,12 @@ let collapseState = false;
 /**
  * 模式锁定（本仓库发行版）：非 null 时强制该模式——模式切换器只剩当前模式标签，其他模式隐藏且不可切换。
  * 代码里三条业务线仍并存（剑与汽水/渐变带/战役），需要放开时把这里改回 null 即可。
+ * 导出的该常量同时给 index.ts 用：锁战役时不启动标准表格的后台机器（填表/同步/标记）。
  */
-const 锁定模式: AppMode | null = 'aiselan';
+export const 锁定模式: AppMode | null = 'aiselan';
 
-function currentMode(): AppMode {
+/** 当前生效模式（锁定优先，其次读设置）——共享页（如设置页）据此分段渲染 */
+export function currentMode(): AppMode {
   return 锁定模式 ?? (loadSettings().appMode ?? 'presets');
 }
 
