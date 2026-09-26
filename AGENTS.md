@@ -1,16 +1,22 @@
-# AGENTS.md — 渐变带·自由回路 扩展 · AI 总介绍
+# AGENTS.md — 战役/渐变带/剑与汽水 三模式扩展 · AI 总介绍
 
 > 本文档写给**修改本扩展的 AI 编程助手**，是接手时的第一份文档（总览 + 规矩）。
 > 人类用户看 `README.md`；引擎公式/状态栏契约/世界书参考/提示词契约等**技术细节**看
 > `docs/具体介绍.md`（按部分查，不必通读）。
 > 改完任何代码后必须跑：`node build.mjs` → `tsc --noEmit` → `node smoke.mjs`（见 §11）。
+>
+> ⚠️ **2026-09-26 起新增第 3 模式「艾瑟兰战役」**（`src/aiselan/`，仓库 four-nine49/zhanyi，版本 1.0.0）：
+> 存档 zod schema / 纯函数引擎 / 增量变更包契约 / 回合调度 / 状态栏与开局面板（毛坯版）/
+> 两条正则包（`regex-艾瑟兰状态栏.json`、`regex-艾瑟兰开局.json`）/ 自测脚本。
+> **改编总览与实施进度看仓库根目录的 `改编说明.md`**；本文其余部分描述「渐变带·自由回路」与
+> 「剑与汽水/开局框架」两条既有业务线，对战役模式同样成立的通用规矩（工程约束、构建链）沿用。
 
 ---
 
 ## 0. 运行时形态（先搞清页面上有什么在跑）
 
 - **一套源码、一份 dist、两条加载通道**：扩展版（manifest 注入 dist/index.js+css）与脚本版
-  （`releases/酒馆助手脚本-开局.json` 引导器从 jsDelivr 按最新 tag 拉同一份 dist）。运行时互斥
+  （`releases/酒馆助手脚本-战役.json` 引导器从 jsDelivr 按最新 tag 拉同一份 dist）。运行时互斥
   （bundle 在主页面 window 设实例 key，脚本版加载器检测到即阻断）。
 - **游玩时页面上有三个活物**，靠**酒馆聊天变量**通信：
   1. **扩展 bundle（常驻后台）**——不只是悬浮窗那张脸：监听 MESSAGE_RECEIVED、跑回合管线、
@@ -98,7 +104,7 @@ src/
 ```
 
 **顶层目录**：`dist/`（构建产物，**不能移动**——脚本版 CDN 靠它）；`docs/具体介绍.md`（AI 技术细节）；
-`归档/`（旧文档与历史快照，仅供追溯）；`releases/酒馆助手脚本-开局.json`（package-loader.mjs 生成）；
+`归档/`（旧文档与历史快照，仅供追溯）；`releases/酒馆助手脚本-战役.json`（package-loader.mjs 生成）；
 `json/regex-开局|状态栏.json`（正则导入包，replaceString 对齐 dist HTML，重新 build 后需重生成）；
 `scripts/`（preset 数据生成器）；`美术预览/`（独立预览页）。
 
@@ -317,7 +323,7 @@ pnpm install --ignore-workspace   # 首次（仓库根有 workspace）
 node build.mjs                    # 产 dist/index.js + dist/index.css + 三个 HTML（css 从 styles.ts 提取）
 node node_modules/typescript/bin/tsc --noEmit   # 类型检查（必须 0 错误）
 node smoke.mjs                    # 冒烟：shim DOM 跑通 init/destroy（shim 刻意最小，缺 API 先补 shim）
-node package-loader.mjs           # 生成 releases/酒馆助手脚本-开局.json（23 项自检）
+node package-loader.mjs           # 生成 releases/酒馆助手脚本-战役.json（23 项自检）
 ```
 
 ## 12. 版本与发布流程（每次改完）
@@ -325,7 +331,7 @@ node package-loader.mjs           # 生成 releases/酒馆助手脚本-开局.js
 1. 改 `core/version.ts` + `manifest.json` + `package.json`（三处同步，当前 1.8.6；
    版本以 `manifest.json` 为准，别凭记忆写）。
 2. `node build.mjs` → `tsc --noEmit`（`pnpm run check`）→ `node smoke.mjs`。
-3. 改了 manifest 版本号 → `node package-loader.mjs` 重新生成 `releases/酒馆助手脚本-开局.json`
+3. 改了 manifest 版本号 → `node package-loader.mjs` 重新生成 `releases/酒馆助手脚本-战役.json`
    （回退版本号自动嵌入；自检必须全 ✅）。
 4. **仅当 dist 的两个 HTML 有变更时**重新生成 `json/regex-开局.json` / `regex-状态栏.json`：
    用新 dist 的 HTML 覆盖其 replaceString（查找标记分别是 `<渐变带开局/>` 和
