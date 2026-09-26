@@ -8,7 +8,9 @@ const WHICH = '数据AI' as const;
 export function renderAiselanPromptsPage(el: HTMLElement): void {
   el.innerHTML = `<div style="padding:16px">
     <div class="of-h1">艾瑟兰战役 · 提示词</div>
-    <div class="of-hint" style="margin-bottom:12px">数据AI 一套（读正文 → 输出增量变更包）。<b>ON/OFF</b> 控制这段发不发，↑↓ 调顺序，可删可加、可恢复默认。</div>
+    <div class="of-hint" style="margin-bottom:12px">数据AI 一套（读正文 → 输出增量变更包）。<b>ON/OFF</b> 控制这段发不发，↑↓ 调顺序，可删可加、可恢复默认。
+      可用占位符：<code>{{状态}}</code>（当前状态摘要）、<code>{{正文}}</code>（分层正文），以及酒馆原生宏 <code>{{user}}</code> <code>{{char}}</code> 等；
+      写错成别的名字不会被替换（会原样发给 AI），改完可跑 <code>node scripts/show-data-ai-prompt.mjs</code> 对照实际效果。</div>
     <div id="ae-pg-group"></div>
   </div>`;
 
@@ -25,7 +27,7 @@ function renderGroup(root: HTMLElement): void {
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
       <div class="of-h2" style="margin:0">${WHICH} 提示词</div>
       <span class="of-hint" style="font-size:11px">逐轮读取正文 → 输出增量变更包</span>
-      <span class="of-hint" style="font-size:11px">占位符：<code>{{状态}} {{正文}}</code></span>
+      <span class="of-hint" style="font-size:11px">占位符：<code>{{状态}} {{正文}}</code>（脚本）｜酒馆宏 <code>{{user}}</code> 等亦可用</span>
     </div>
     <div class="ae-pg-segs" style="margin-top:8px"></div>
     <div style="display:flex;gap:8px;margin-top:8px">
