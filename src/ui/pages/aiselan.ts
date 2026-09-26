@@ -116,7 +116,7 @@ function 渲染状态(g: Game): string {
 
   const 物品组 = (类型: string) => g.物品.filter(i => i.类型 === 类型);
   const 物品行 = (列表: typeof g.物品) => 列表.length
-    ? 列表.map(i => `<div class="of-hint" style="font-size:12px;line-height:1.7">· ${i.名称}×${i.数量}${i.槽 ? `[${i.槽}]` : ''}${i.持有者 !== '主角' ? `（${i.持有者}）` : ''}${i.描述 ? ` — ${i.描述}` : ''}</div>`).join('')
+    ? 列表.map(i => `<div class="of-hint" style="font-size:12px;line-height:1.7">· <span style="color:#8a94a6">#${i.编号}</span> ${i.名称}${i.槽 ? `[${i.槽}]` : ''}${i.持有者 !== '主角' ? `（${i.持有者}）` : ''}${i.描述 ? ` — ${i.描述}` : ''}</div>`).join('')
     : '<div class="of-hint" style="font-size:12px">（无）</div>';
 
   return `

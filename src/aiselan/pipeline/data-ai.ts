@@ -32,28 +32,30 @@ const SCHEMA = {
       时钟: {
         type: 'object',
         properties: {
-          维尔伦陷落度: { type: 'integer', minimum: 1, description: '仅当大规模战斗/爆破时申报增量' },
-          教会肃清进度: { type: 'integer', minimum: 1, description: '仅当教会面前暴露异术/正面冲突/目击者增加时申报增量' },
+          维尔伦陷落度: { type: 'integer', minimum: 1, description: '仅当全城级大动静（剧烈爆破/大面积坍塌/大规模混战）申报增量；普通战斗不报' },
+          教会肃清进度: { type: 'integer', minimum: 1, description: '仅当在教会卫兵面前公开使用系统技术、与审判庭猎杀小队交火、或被大批平民目击报告教会时申报' },
         },
         additionalProperties: false,
       },
       推演: {
         type: 'object',
         properties: {
-          名称: { type: 'string', description: '推演的技术名，如 "爆破物制备"' },
-          档: { type: 'integer', minimum: 1, maximum: 5, description: '档1原始工具/档2简单机械/档3复杂机械/档4工业技术/档5电子技术' },
+          名称: { type: 'string', description: '推演的技术名；仅当正文明确完成推演并给出图纸/成果时申报（算力不足、推演终止、口头设想都不报）' },
+          档: { type: 'integer', minimum: 1, maximum: 5, description: '1档原始工具/2档简单机械/3档复杂化工·精细机械/4档近代工业/5档电气信息；只报档位，绝不扣算力' },
         },
         required: ['名称', '档'],
         additionalProperties: false,
       },
       属性: {
         type: 'object',
+        description: '仅力敏体可报，严禁申报智力（智力由脚本接管）。单次 +1。力/敏：以陷阱/落石/爆破等方式彻底击杀具名强敌首领；体：濒死状态被救回或凭意志撑过极限',
         properties: {
           力量: { type: 'integer' }, 敏捷: { type: 'integer' },
-          体质: { type: 'integer' }, 智力: { type: 'integer' },
+          体质: { type: 'integer' },
         },
         additionalProperties: false,
       },
+      主角状态: { type: 'string', description: '主角持续性生理状态，如 "左肩贯穿伤(失血)"；恢复良好时填 "健康"。严禁一过性动作或心理描写' },
       临时加成新增: {
         type: 'array',
         items: {
@@ -88,16 +90,6 @@ const SCHEMA = {
       },
       物品移除: { type: 'array', items: { type: 'string' } },
       物品数量: { type: 'object', additionalProperties: { type: 'integer' }, description: '物品名 → 增量，如 {"治疗药剂": -1}' },
-      装备变更: {
-        type: 'object',
-        properties: {
-          人物: { type: 'string', enum: ['主角', '爱丽丝'] },
-          槽: { type: 'string', enum: ['武器', '副手', '护甲', '饰品'] },
-          物品: { type: ['string', 'null'], description: '物品名，null=卸下' },
-        },
-        required: ['人物', '槽', '物品'],
-        additionalProperties: false,
-      },
       技能新增: {
         type: 'array',
         items: {
@@ -136,8 +128,8 @@ const SCHEMA = {
         additionalProperties: {
           type: 'object',
           properties: {
-            已遇见: { type: 'boolean', description: '只能 false→true' },
-            状态: { type: 'string', description: '自由文本："在队"/"留守在协会"/"死亡"' },
+            已遇见: { type: 'boolean', description: '初次正面对面遭遇或目击时置 true，只能 false→true' },
+            状态: { type: 'string', description: '自由文本："在队"/"留守通风管道"/"死亡"；死亡不可逆、不可移出建档' },
             和主角的关系: {
               type: 'string',
               enum: ['路人', '相识', '熟人', '恋人', '灵魂的另一半'],
@@ -145,6 +137,7 @@ const SCHEMA = {
             },
             属性: {
               type: 'object',
+              description: '仅当正文写明该生物属性被外力改变时申报，单次 ±1（NPC 不受主角智力禁令限制；裂隙强化由脚本自动处理）',
               properties: {
                 力量: { type: 'integer' }, 敏捷: { type: 'integer' },
                 体质: { type: 'integer' }, 智力: { type: 'integer' },

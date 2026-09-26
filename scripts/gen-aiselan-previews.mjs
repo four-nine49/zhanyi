@@ -35,12 +35,42 @@ window.__AI_PREVIEW__ = true;
 var __SAMPLE__ = ${JSON.stringify(sample)};
 function getVariables(o) {
   if (!o) return {};
-  if (o.type === 'message') return { stat_data: { 艾瑟兰: __SAMPLE__ } };
-  if (o.type === 'chat') return { 艾瑟兰: __SAMPLE__ };
+  var g = window.__PREVIEW_GAME__ || __SAMPLE__;
+  if (o.type === 'message') return { stat_data: { 艾瑟兰: g } };
+  if (o.type === 'chat') return { 艾瑟兰: g };
   return {};
 }
 function getCurrentMessageId() { return 0; }
+function getLastMessageId() { return 0; }
+/* 装备穿脱演示用：把写入动作显示到页面右上角，并把改动写回内存存档，便于连续点击 */
+window.__PREVIEW_GAME__ = JSON.parse(JSON.stringify(__SAMPLE__));
+function updateVariablesWith(fn, opts) {
+  try {
+    if (opts && opts.type === 'chat') {
+      var v = {}; v['艾瑟兰'] = window.__PREVIEW_GAME__;
+      v = fn(v) || v;
+      window.__PREVIEW_GAME__ = v['艾瑟兰'];
+      var gg = window.__PREVIEW_GAME__;
+      __LOG__('【写入存档】主角装备 → ' + JSON.stringify(gg['主角']['装备'])
+        + (gg['生物'] && gg['生物']['爱丽丝'] ? '　爱丽丝装备 → ' + JSON.stringify(gg['生物']['爱丽丝']['装备']) : ''));
+    } else if (opts && opts.type === 'message') {
+      window.__PREVIEW_GAME__ = window.__PREVIEW_GAME__;
+    }
+  } catch (e) { __LOG__('写入异常：' + e); }
+  return Promise.resolve();
+}
+function __LOG__(m) {
+  var d = document.getElementById('__preview_log');
+  if (d) d.textContent += m + '\\n';
+}
 </script>
+<style>
+#__preview_log{position:fixed;left:8px;top:8px;max-width:360px;max-height:40vh;overflow:auto;
+  background:#0b0f14;border:1px solid #3a4352;border-radius:6px;padding:8px;font:12px/1.6 Consolas,monospace;
+  color:#9ecbff;white-space:pre-wrap;z-index:9999;}
+</style>
+<pre id="__preview_log">— 预览日志（点「装备/卸下」后这里显示写入内容） —
+</pre>
 `;
   const out = 注入(html, stub);
   const f = resolve(OUT_DIR, '艾瑟兰状态栏预览.html');

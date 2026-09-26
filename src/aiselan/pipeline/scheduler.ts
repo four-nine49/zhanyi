@@ -6,6 +6,7 @@ import { loadSettings, STATUS_MARKER } from '../core/settings';
 import { loadGame, saveGame, syncSnapshot } from '../core/store';
 import { runDataAI } from './data-ai';
 import { settle } from './settle';
+import { 清空动作 } from '../engine/engine';
 
 const SYNCABLE_TYPES = ['normal', 'regenerate', 'continue', 'swipe'];
 let unsub: { stop: () => void } | null = null;
@@ -28,8 +29,12 @@ async function appendStatusMarker(floorId: number): Promise<void> {
 async function runTurn(): Promise<回合报告> {
   const report: 回合报告 = { log: [], 丢弃: [] };
   const settings = loadSettings();
-  const g = loadGame();
+  let g = loadGame();
   if (!g) { report.error = '未初始化存档（先在战役页初始化开局）'; return report; }
+
+  // 每轮清空动作（状态栏操作流水不跨轮；清空后的存档随本回合一起落盘）
+  const 清后 = 清空动作(g);
+  if (清后 !== g) { g = 清后; report.log.push('（已清空上一轮的动作流水）'); }
 
   if (settings.开关.自动结算) {
     const res = await runDataAI(g);

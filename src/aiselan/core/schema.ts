@@ -40,10 +40,10 @@ export const 算力Schema = z.object({
 export const 物品类型 = z.enum(['装备', '消耗品', '材料', '特殊']);
 export const 装备槽 = z.enum(['武器', '副手', '护甲', '饰品']);
 export const 物品Schema = z.object({
+  编号: z.string().default(''),                  // 每件物品独立编号（不堆叠：同名多件=多条记录）；旧档由 loadGame 迁移补齐
   名称: z.string().min(1),
   类型: 物品类型,
   持有者: z.string().default('主角'),            // "主角" 或生物名（爱丽丝/诺拉…）
-  数量: z.number().int().min(1).default(1),
   描述: z.string().default(''),
   槽: 装备槽.optional(),                          // 仅类型=装备时有
 });
@@ -72,7 +72,7 @@ export const 技能Schema = z.object({
   描述: z.string().default(''),
 });
 
-/* ── 装备块（槽位 → 物品名，null=空槽）── */
+/* ── 装备块（槽位 → 物品编号，null=空槽；旧档存的是物品名，loadGame 迁移为编号）── */
 export const 装备块Schema = z.object({
   武器: z.string().nullable().default(null),
   副手: z.string().nullable().default(null),
@@ -128,6 +128,16 @@ export const 生物建档Schema = z.object({
   异界幼体: 生物Schema.extend({ 类型: z.literal('生物'), 立场: z.literal('敌对') }),
 });
 
+/* ── 动作（每轮清空的玩家操作流水；状态栏写入 → EJS 世界书条目注入正文AI）── */
+export const 动作Schema = z.object({
+  类型: z.string().min(1),                       // "使用消耗品"；后续可扩："推演"/"施法"/"装槽"…
+  名称: z.string().min(1),                       // 物品名或动作名
+  编号: z.string().default(''),                  // 涉及物品时填物品编号
+  说明: z.string().default(''),                  // 自由文本（如物品描述），供正文AI理解
+  时刻: z.string().default(''),                  // 记录时的游戏内时刻
+});
+export type 动作 = z.infer<typeof 动作Schema>;
+
 /* ── 顶层存档 ── */
 export const GameSchema = z.object({
   version: z.literal(1),
@@ -136,6 +146,7 @@ export const GameSchema = z.object({
   时钟: 时钟Schema,
   算力: 算力Schema,
   物品: z.array(物品Schema).default([]),
+  动作: z.array(动作Schema).default([]),       // 每轮清空（脚本在每回合开始时清），状态栏写入，EJS 读快照注入世界书
   主角: 主角Schema,
   生物: 生物建档Schema,
 });
@@ -157,6 +168,7 @@ export const 开局存档: Game = {
   时钟: { 维尔伦陷落度: 0, 教会肃清进度: 0 },
   算力: { 当前算力: 0, 速率: 10, 累计消耗: 0, 推演记录: [] },
   物品: [],
+  动作: [],
   主角: {
     性别: '男',
     属性: { 力量: 8, 敏捷: 8, 体质: 8, 智力: 11 },

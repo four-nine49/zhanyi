@@ -71,15 +71,20 @@ export interface 时间结算结果 {
   新当前时刻: string;
   陷落度自动推进: number;         // 本回合因时间累计自动 +N 格
   算力恢复: number;              // 本回合恢复的算力
+  智力成长: number;              // 本回合因时间累计自动 +N 点智力（每 10 游戏小时 1 点，上限 14）
   到期加成: string[];            // 到期被移除的加成来源名
 }
+
+/** 智力自动成长参数：每 10 游戏小时 +1，上限 14（智力不吃 AI 申报，只随时间涨） */
+export const 智力成长分钟 = 600;
+export const 智力上限 = 14;
 
 /** 时间结算：算力恢复 / 临时加成扣减 / 陷落度自动推进 */
 export function 结算时间(g: Game, 新时刻: string): { g: Game; 结果: 时间结算结果 } {
   const 旧分钟 = 时刻转分钟(g.时刻.当前时刻);
   const 新分钟 = 时刻转分钟(新时刻);
   if (旧分钟 == null || 新分钟 == null) {
-    return { g, 结果: { Δt: 0, 新当前时刻: g.时刻.当前时刻, 陷落度自动推进: 0, 算力恢复: 0, 到期加成: [] } };
+    return { g, 结果: { Δt: 0, 新当前时刻: g.时刻.当前时刻, 陷落度自动推进: 0, 算力恢复: 0, 智力成长: 0, 到期加成: [] } };
   }
 
   let Δt = 新分钟 - 旧分钟;
@@ -119,12 +124,22 @@ export function 结算时间(g: Game, 新时刻: string): { g: Game; 结果: 时
     新g.时钟.维尔伦陷落度 = Math.min(6, 新g.时钟.维尔伦陷落度 + 自动推进);
   }
 
-  // 4. 更新当前时刻
+  // 4. 智力自动成长：每累计满 600 分钟（10 游戏小时）+1，上限 14
+  let 智力成长 = 0;
+  const 旧智档 = Math.floor(旧累计 / 智力成长分钟);
+  const 新智档 = Math.floor(新g.时刻.累计分钟 / 智力成长分钟);
+  if (新智档 > 旧智档) {
+    const 目标 = Math.min(智力上限, 新g.主角.属性.智力 + (新智档 - 旧智档));
+    智力成长 = 目标 - 新g.主角.属性.智力;
+    新g.主角.属性.智力 = 目标;
+  }
+
+  // 5. 更新当前时刻
   新g.时刻.当前时刻 = 新时刻;
 
   return {
     g: 新g,
-    结果: { Δt, 新当前时刻: 新时刻, 陷落度自动推进: 自动推进, 算力恢复: 恢复, 到期加成 },
+    结果: { Δt, 新当前时刻: 新时刻, 陷落度自动推进: 自动推进, 算力恢复: 恢复, 智力成长, 到期加成 },
   };
 }
 
@@ -138,6 +153,8 @@ export interface 推演结果 {
   成交: boolean;
   实付算力?: number;
   驳回原因?: string;
+  触发裂隙?: boolean;            // 本回合累计消耗跨过 250，世界进入【裂隙】
+  裂隙强化?: string[];           // 因裂隙被强化的魔物名
 }
 
 /** 推演扣费：算力够则扣，不够则驳回 */
@@ -150,11 +167,27 @@ export function 结算推演(g: Game, 名称: string, 档: number): { g: Game; �
   }
 
   const 新g: Game = JSON.parse(JSON.stringify(g));
+  const 旧累计 = 新g.算力.累计消耗;
   新g.算力.当前算力 -= 定价;
   新g.算力.累计消耗 += 定价;
   新g.算力.推演记录.push({ 名称, 档, 实付算力: 定价, 时刻: 新g.时刻.当前时刻 });
 
-  return { g: 新g, 结果: { 成交: true, 实付算力: 定价 } };
+  // 累计消耗跨过 250 → 世界进入【裂隙】，全城魔物狂暴化：魔物（类型=生物）全属性 +1（脚本自动应用，AI 不管）
+  let 触发裂隙 = false;
+  const 强化: string[] = [];
+  if (旧累计 < 250 && 新g.算力.累计消耗 >= 250) {
+    触发裂隙 = true;
+    for (const 名 of Object.keys(新g.生物) as (keyof Game['生物'])[]) {
+      const b = 新g.生物[名];
+      if (b.类型 !== '生物') continue;          // 只强化魔物，不动人类 NPC
+      for (const k of ['力量', '敏捷', '体质', '智力'] as const) {
+        b.属性[k] = Math.min(23, b.属性[k] + 1);
+      }
+      强化.push(名 as string);
+    }
+  }
+
+  return { g: 新g, 结果: { 成交: true, 实付算力: 定价, 触发裂隙, 裂隙强化: 强化 } };
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -178,6 +211,13 @@ export function 结算属性(
     const 当前 = 对象.属性[属性名];
     对象.属性[属性名] = Math.max(1, Math.min(上限, 当前 + 钳制增量));
   }
+  return 新g;
+}
+
+/** 主角状态（自由文本：持续伤势/中毒等；"健康" 即恢复正常） */
+export function 结算主角状态(g: Game, 状态: string): Game {
+  const 新g: Game = JSON.parse(JSON.stringify(g));
+  新g.主角.状态 = 状态;
   return 新g;
 }
 
@@ -216,55 +256,144 @@ export function 结算临时加成移除(
   return 新g;
 }
 
-/** 物品新增 */
-export function 结算物品新增(g: Game, 物品: 物品): Game {
+/** 下一件物品编号（数字字符串，取现有最大值 +1） */
+export function 下一物品编号(g: Game): number {
+  let max = 0;
+  for (const i of g.物品) {
+    const n = parseInt(i.编号, 10);
+    if (Number.isFinite(n) && n > max) max = n;
+  }
+  return max + 1;
+}
+
+/** 物品新增：按 数量 展开成 N 条独立记录（每件一个编号，不堆叠） */
+export function 结算物品新增(
+  g: Game,
+  物品: { 名称: string; 类型: 物品['类型']; 持有者?: string; 数量?: number; 描述?: string; 槽?: 物品['槽'] },
+): Game {
   const 新g: Game = JSON.parse(JSON.stringify(g));
-  // 同名同持有者 → 数量叠加（消耗品/材料/特殊）；装备唯一制直接追加
-  const 同名片 = 新g.物品.find(i => i.名称 === 物品.名称 && i.持有者 === 物品.持有者 && i.类型 !== '装备');
-  if (同名片) { 同名片.数量 += 物品.数量; return 新g; }
-  新g.物品.push({ ...物品 });
+  const 份数 = Math.max(1, Math.floor(物品.数量 ?? 1));
+  let 下一个 = 下一物品编号(新g);
+  for (let k = 0; k < 份数; k++) {
+    新g.物品.push({
+      编号: String(下一个++),
+      名称: 物品.名称,
+      类型: 物品.类型,
+      持有者: 物品.持有者 || '主角',
+      描述: 物品.描述 || '',
+      ...(物品.槽 ? { 槽: 物品.槽 } : {}),
+    });
+  }
   return 新g;
 }
 
-/** 物品移除（按名称+持有者） */
-export function 结算物品移除(g: Game, 名称: string, 持有者: string = '主角'): Game {
+/** 找一件物品：先按编号精确匹配，再按名称（优先主角持有） */
+export function 找物品(g: Game, 标识: string, 持有者?: string): 物品 | undefined {
+  const 池 = 持有者 ? g.物品.filter(i => i.持有者 === 持有者) : g.物品;
+  return 池.find(i => i.编号 === 标识)
+    || 池.find(i => i.名称 === 标识 && i.持有者 === '主角')
+    || 池.find(i => i.名称 === 标识);
+}
+
+/** 物品移除：按编号或名称删掉「一件」（同名多件只删第一件） */
+export function 结算物品移除(g: Game, 标识: string, 持有者?: string): Game {
+  const 片 = 找物品(g, 标识, 持有者);
+  if (!片) return g;
   const 新g: Game = JSON.parse(JSON.stringify(g));
-  新g.物品 = 新g.物品.filter(i => !(i.名称 === 名称 && i.持有者 === 持有者));
+  新g.物品 = 新g.物品.filter(i => i !== 新g.物品.find(x => x.编号 === 片.编号));
   return 新g;
 }
 
-/** 物品数量变化（归 0 自动删） */
+/** 物品数量变化：负数删 N 件（不足则全删）；正数按同名现有物品为模板复制 N 件（各有新编号） */
 export function 结算物品数量(g: Game, 名称: string, 变化: number, 持有者: string = '主角'): Game {
   const 新g: Game = JSON.parse(JSON.stringify(g));
-  const 片 = 新g.物品.find(i => i.名称 === 名称 && i.持有者 === 持有者);
-  if (!片) return g;
-  片.数量 += 变化;
-  if (片.数量 <= 0) 新g.物品 = 新g.物品.filter(i => i !== 片);
-  return 新g;
+  if (变化 < 0) {
+    let 删 = Math.abs(变化);
+    const 保留: 物品[] = [];
+    for (const i of 新g.物品) {
+      if (删 > 0 && i.名称 === 名称 && i.持有者 === 持有者) { 删--; continue; }
+      保留.push(i);
+    }
+    if (删 > 0) return g;                      // 数量不足 → 整体不动作（settle 记账）
+    新g.物品 = 保留;
+    return 新g;
+  }
+  if (变化 > 0) {
+    const 模板 = 新g.物品.find(i => i.名称 === 名称 && i.持有者 === 持有者);
+    if (!模板) return g;                       // 没有同名物品可作模板 → 不动作
+    let 下一个 = 下一物品编号(新g);
+    for (let k = 0; k < 变化; k++) {
+      新g.物品.push({ ...模板, 编号: String(下一个++) });
+    }
+    return 新g;
+  }
+  return g;
 }
 
-/** 装备变更：校验物品存在/类型/槽匹配/持有者一致 */
+/** 装备变更：目标可以是物品编号或物品名；校验持有者/类型/槽 */
 export function 结算装备变更(
   g: Game,
   人物: '主角' | '爱丽丝',
   槽: '武器' | '副手' | '护甲' | '饰品',
-  物品名: string | null,
+  目标: string | null,
 ): { g: Game; 成功: boolean; 原因?: string } {
   const 新g: Game = JSON.parse(JSON.stringify(g));
   const 对象 = 人物 === '主角' ? 新g.主角 : 新g.生物.爱丽丝;
   if (!对象.装备) return { g, 成功: false, 原因: `${人物} 无装备系统` };
 
-  if (物品名 === null) {                       // 卸下
+  if (目标 === null || 目标 === '') {           // 卸下
     对象.装备[槽] = null;
     return { g: 新g, 成功: true };
   }
 
-  const 片 = 新g.物品.find(i => i.名称 === 物品名 && i.持有者 === 人物);
-  if (!片) return { g, 成功: false, 原因: `物品 ${物品名} 不存在或持有者不符` };
-  if (片.类型 !== '装备') return { g, 成功: false, 原因: `${物品名} 类型不是装备` };
-  if (片.槽 !== 槽) return { g, 成功: false, 原因: `${物品名} 槽位 ${片.槽} 与目标槽 ${槽} 不匹配` };
+  const 片 = 找物品(新g, 目标, 人物);
+  if (!片) return { g, 成功: false, 原因: `物品 ${目标} 不存在或持有者不符` };
+  if (片.类型 !== '装备') return { g, 成功: false, 原因: `${片.名称} 类型不是装备` };
+  if (片.槽 !== 槽) return { g, 成功: false, 原因: `${片.名称} 槽位 ${片.槽 || '（无）'} 与目标槽 ${槽} 不匹配` };
 
-  对象.装备[槽] = 物品名;
+  对象.装备[槽] = 片.编号;                       // 槽位存物品编号
+  return { g: 新g, 成功: true };
+}
+
+/** 清空动作（每回合开始时由调度器调用） */
+export function 清空动作(g: Game): Game {
+  if (!g.动作 || g.动作.length === 0) return g;
+  const 新g: Game = JSON.parse(JSON.stringify(g));
+  新g.动作 = [];
+  return 新g;
+}
+
+/** 追加一条动作记录 */
+export function 追加动作(g: Game, 动作: { 类型: string; 名称: string; 编号?: string; 说明?: string }): Game {
+  const 新g: Game = JSON.parse(JSON.stringify(g));
+  if (!新g.动作) 新g.动作 = [];
+  新g.动作.push({
+    类型: 动作.类型,
+    名称: 动作.名称,
+    编号: 动作.编号 || '',
+    说明: 动作.说明 || '',
+    时刻: 新g.时刻?.当前时刻 || '',
+  });
+  return 新g;
+}
+
+/** 使用消耗品（状态栏操作）：删掉该件 + 记一条动作。仅限本人持有的「消耗品」 */
+export function 使用消耗品(g: Game, 编号: string, 人物: string = '主角'): { g: Game; 成功: boolean; 原因?: string } {
+  const 片 = g.物品.find(i => i.编号 === 编号);
+  if (!片) return { g, 成功: false, 原因: `物品 #${编号} 不存在` };
+  if (片.持有者 !== 人物) return { g, 成功: false, 原因: `#${编号} 不是${人物}持有的物品` };
+  if (片.类型 !== '消耗品') return { g, 成功: false, 原因: `#${编号}（${片.名称}）不是消耗品` };
+
+  const 新g: Game = JSON.parse(JSON.stringify(g));
+  新g.物品 = 新g.物品.filter(i => i.编号 !== 编号);
+  if (!新g.动作) 新g.动作 = [];
+  新g.动作.push({
+    类型: '使用消耗品',
+    名称: 片.名称,
+    编号: 片.编号,
+    说明: 片.描述 || '',
+    时刻: 新g.时刻?.当前时刻 || '',
+  });
   return { g: 新g, 成功: true };
 }
 

@@ -33,6 +33,12 @@
   #aiselan-bar .cell.on{background:#e06c75;border-color:#e06c75;}
   #aiselan-bar .cell.on.s2{background:#e5c07b;border-color:#e5c07b;}
   #aiselan-bar .sub{font-size:11px;color:var(--dim);}
+  #aiselan-bar .num{color:#8a94a6;font-family:Consolas,monospace;font-size:11px;}
+  #aiselan-bar .eqbtn.del{color:#e88a8a;}
+  #aiselan-bar .eqbtn.del:hover{border-color:#e88a8a;}
+  #aiselan-bar .eqbtn{border:1px solid var(--line);background:#1c2531;color:#9ecbff;border-radius:4px;
+    padding:0 6px;font-size:11px;cursor:pointer;margin-left:4px;font-family:inherit;}
+  #aiselan-bar .eqbtn:hover{border-color:#9ecbff;}
 </style>
 </head>
 <body>
@@ -41,20 +47,53 @@
 <script>
 /* ── 本地预览桩（仅预览文件使用；酒馆内由 TavernHelper 提供同名接口） ── */
 window.__AI_PREVIEW__ = true;
-var __SAMPLE__ = {"version":1,"时刻":{"当前时刻":"1042年11月29日 16:47"},"位置":{"当前":"灰石集市","区域":"中层"},"时钟":{"维尔伦陷落度":3,"教会肃清进度":1},"算力":{"当前算力":70,"速率":10,"累计消耗":105,"推演记录":[]},"物品":[{"名称":"精钢短剑","类型":"装备","持有者":"主角","数量":1,"描述":"","槽":"武器"},{"名称":"治疗药剂","类型":"消耗品","持有者":"主角","数量":2,"描述":""},{"名称":"硝石","类型":"材料","持有者":"主角","数量":3,"描述":"爆破原料"},{"名称":"爆破物图纸","类型":"特殊","持有者":"主角","数量":1,"描述":"推演产物"}],"主角":{"属性":{"力量":8,"敏捷":9,"体质":9,"智力":11},"临时加成":[{"属性":"力量","值":1,"剩余分钟":120,"来源":"战歌"}],"状态":"轻伤","技能":[{"名称":"剑术","等阶":"熟练","描述":""}],"装备":{"武器":"精钢短剑","副手":null,"护甲":null,"饰品":null},"精练师等级":"无","已解锁知识库":["地球"]},"生物":{"爱丽丝":{"类型":"核心","立场":"同伴","已遇见":true,"状态":"在队","和主角的关系":"熟人","属性":{"力量":8,"敏捷":11,"体质":10,"智力":15},"临时加成":[],"技能":[],"装备":{}},"诺拉":{"类型":"重要","立场":"同伴","已遇见":true,"状态":"留守在冒险者协会","和主角的关系":"相识","属性":{"力量":6,"敏捷":11,"体质":8,"智力":13},"临时加成":[],"技能":[]},"瓦尔特":{"类型":"重要","立场":"同伴","已遇见":false,"状态":"","和主角的关系":"路人","属性":{"力量":12,"敏捷":7,"体质":11,"智力":10},"临时加成":[],"技能":[]},"提尔雅":{"类型":"重要","立场":"同伴","已遇见":false,"状态":"","和主角的关系":"路人","属性":{"力量":7,"敏捷":12,"体质":8,"智力":9},"临时加成":[],"技能":[]},"维克托":{"类型":"重要","立场":"敌对","已遇见":true,"状态":"追查中","和主角的关系":"路人","属性":{"力量":12,"敏捷":11,"体质":12,"智力":14},"临时加成":[],"技能":[]},"马利基":{"类型":"重要","立场":"敌对","已遇见":false,"状态":"","和主角的关系":"路人","属性":{"力量":14,"敏捷":12,"体质":14,"智力":16},"临时加成":[],"技能":[]},"虚空暴食魔":{"类型":"生物","立场":"敌对","已遇见":true,"状态":"死亡","和主角的关系":"路人","属性":{"力量":15,"敏捷":7,"体质":16,"智力":4},"临时加成":[],"技能":[]},"异界幼体":{"类型":"生物","立场":"敌对","已遇见":false,"状态":"未降临","和主角的关系":"路人","属性":{"力量":17,"敏捷":15,"体质":17,"智力":12},"临时加成":[],"技能":[]}}};
+var __SAMPLE__ = {"version":1,"时刻":{"当前时刻":"1042年11月29日 16:47"},"位置":{"当前":"灰石集市","区域":"中层"},"时钟":{"维尔伦陷落度":3,"教会肃清进度":1},"算力":{"当前算力":70,"速率":10,"累计消耗":105,"推演记录":[]},"物品":[{"编号":"1","名称":"精钢短剑","类型":"装备","持有者":"主角","描述":"被踩死的卫兵留下的","槽":"武器"},{"编号":"2","名称":"治疗药剂","类型":"消耗品","持有者":"主角","描述":""},{"编号":"3","名称":"治疗药剂","类型":"消耗品","持有者":"主角","描述":""},{"编号":"4","名称":"硝石","类型":"材料","持有者":"主角","描述":"爆破原料"},{"编号":"5","名称":"爆破物图纸","类型":"特殊","持有者":"主角","描述":"推演产物"},{"编号":"6","名称":"旧皮甲","类型":"装备","持有者":"爱丽丝","描述":"她母亲留下的","槽":"护甲"}],"主角":{"属性":{"力量":8,"敏捷":9,"体质":9,"智力":11},"临时加成":[{"属性":"力量","值":1,"剩余分钟":120,"来源":"战歌"}],"状态":"轻伤","技能":[{"名称":"剑术","等阶":"熟练","描述":""}],"装备":{"武器":"1","副手":null,"护甲":null,"饰品":null},"精练师等级":"无","已解锁知识库":["地球"]},"生物":{"爱丽丝":{"类型":"核心","立场":"同伴","已遇见":true,"状态":"在队","和主角的关系":"熟人","属性":{"力量":8,"敏捷":11,"体质":10,"智力":15},"临时加成":[],"技能":[],"装备":{"武器":null,"副手":null,"护甲":null,"饰品":null}},"诺拉":{"类型":"重要","立场":"同伴","已遇见":true,"状态":"留守在冒险者协会","和主角的关系":"相识","属性":{"力量":6,"敏捷":11,"体质":8,"智力":13},"临时加成":[],"技能":[]},"瓦尔特":{"类型":"重要","立场":"同伴","已遇见":false,"状态":"","和主角的关系":"路人","属性":{"力量":12,"敏捷":7,"体质":11,"智力":10},"临时加成":[],"技能":[]},"提尔雅":{"类型":"重要","立场":"同伴","已遇见":false,"状态":"","和主角的关系":"路人","属性":{"力量":7,"敏捷":12,"体质":8,"智力":9},"临时加成":[],"技能":[]},"维克托":{"类型":"重要","立场":"敌对","已遇见":true,"状态":"追查中","和主角的关系":"路人","属性":{"力量":12,"敏捷":11,"体质":12,"智力":14},"临时加成":[],"技能":[]},"马利基":{"类型":"重要","立场":"敌对","已遇见":false,"状态":"","和主角的关系":"路人","属性":{"力量":14,"敏捷":12,"体质":14,"智力":16},"临时加成":[],"技能":[]},"虚空暴食魔":{"类型":"生物","立场":"敌对","已遇见":true,"状态":"死亡","和主角的关系":"路人","属性":{"力量":15,"敏捷":7,"体质":16,"智力":4},"临时加成":[],"技能":[]},"异界幼体":{"类型":"生物","立场":"敌对","已遇见":false,"状态":"未降临","和主角的关系":"路人","属性":{"力量":17,"敏捷":15,"体质":17,"智力":12},"临时加成":[],"技能":[]}}};
 function getVariables(o) {
   if (!o) return {};
-  if (o.type === 'message') return { stat_data: { 艾瑟兰: __SAMPLE__ } };
-  if (o.type === 'chat') return { 艾瑟兰: __SAMPLE__ };
+  var g = window.__PREVIEW_GAME__ || __SAMPLE__;
+  if (o.type === 'message') return { stat_data: { 艾瑟兰: g } };
+  if (o.type === 'chat') return { 艾瑟兰: g };
   return {};
 }
 function getCurrentMessageId() { return 0; }
+function getLastMessageId() { return 0; }
+/* 装备穿脱演示用：把写入动作显示到页面右上角，并把改动写回内存存档，便于连续点击 */
+window.__PREVIEW_GAME__ = JSON.parse(JSON.stringify(__SAMPLE__));
+function updateVariablesWith(fn, opts) {
+  try {
+    if (opts && opts.type === 'chat') {
+      var v = {}; v['艾瑟兰'] = window.__PREVIEW_GAME__;
+      v = fn(v) || v;
+      window.__PREVIEW_GAME__ = v['艾瑟兰'];
+      var gg = window.__PREVIEW_GAME__;
+      __LOG__('【写入存档】主角装备 → ' + JSON.stringify(gg['主角']['装备'])
+        + (gg['生物'] && gg['生物']['爱丽丝'] ? '　爱丽丝装备 → ' + JSON.stringify(gg['生物']['爱丽丝']['装备']) : ''));
+    } else if (opts && opts.type === 'message') {
+      window.__PREVIEW_GAME__ = window.__PREVIEW_GAME__;
+    }
+  } catch (e) { __LOG__('写入异常：' + e); }
+  return Promise.resolve();
+}
+function __LOG__(m) {
+  var d = document.getElementById('__preview_log');
+  if (d) d.textContent += m + '\n';
+}
 </script>
+<style>
+#__preview_log{position:fixed;left:8px;top:8px;max-width:360px;max-height:40vh;overflow:auto;
+  background:#0b0f14;border:1px solid #3a4352;border-radius:6px;padding:8px;font:12px/1.6 Consolas,monospace;
+  color:#9ecbff;white-space:pre-wrap;z-index:9999;}
+</style>
+<pre id="__preview_log">— 预览日志（点「装备/卸下」后这里显示写入内容） —
+</pre>
 <script>
 (function () {
   'use strict';
   /* ── 常量表（与引擎口径一致，纯展示） ── */
   var NS = '艾瑟兰';
+  /* 界面状态（仅本页内存，重渲染保留、刷新页面重置） */
+  var 删除模式 = false;      // 开启后才在物品旁显示「删除」
+  var 物品折叠 = false;      // 物品区折叠（东西多时收起来）
   var 阶段名 = ['风暴眼', '混乱期', '混乱期', '沦陷期·水源带毒', '沦陷期·焚城', '收束期·幼体降临', '终局·火炮洗地'];
   var 肃清名 = ['追查中', '锁定玩家', '围捕', '全域神圣轰炸'];
   var 属性名 = ['力量', '敏捷', '体质', '智力'];
@@ -81,6 +120,106 @@ function getCurrentMessageId() { return 0; }
   }
   function readChat() {
     try { var v = getVariables({ type: 'chat' }); return v ? v[NS] || null : null; } catch (e) { return null; }
+  }
+
+  /* ── 写入通道（装备穿脱用）：改 chat 变量 `艾瑟兰` → 300ms 后同步快照到最新楼（与扩展落盘同一份存储） ── */
+  function syncSnapshot(g) {
+    try {
+      var snap = JSON.parse(JSON.stringify(g));
+      if (snap['时刻']) delete snap['时刻']['累计分钟'];
+      updateVariablesWith(function (v) {
+        v.stat_data = v.stat_data || {}; v.stat_data[NS] = snap; return v;
+      }, { type: 'message', message_id: getLastMessageId() });
+    } catch (e) {}
+  }
+  function writeGame(mut) {
+    try {
+      var g = readChat();
+      if (!g) return null;
+      var out = mut(g);
+      if (!out) return null;                       // 变更非法 → 不落盘
+      updateVariablesWith(function (v) { v[NS] = out; return v; }, { type: 'chat' });
+      setTimeout(function () { syncSnapshot(out); }, 300);
+      return out;
+    } catch (e) { return null; }
+  }
+
+  /* ── 装备穿脱（纯函数，可单测）：按「物品编号」穿上/卸下，槽位存编号 ── */
+  function 装备块Of(g, 人物) {
+    if (人物 === '主角') return g.主角 && g.主角.装备;
+    var b = g.生物 && g.生物[人物];
+    return b && b.装备;
+  }
+  function 物品By编号(g, 编号) {
+    return (g.物品 || []).filter(function (i) { return i.编号 === 编号; })[0];
+  }
+  function 装备物品(g, 编号, 人物) {
+    人物 = 人物 || '主角';
+    var 块 = 装备块Of(g, 人物);
+    var 片 = 物品By编号(g, 编号);
+    if (!块 || !片 || !片.槽 || 片.持有者 !== 人物 || 片.类型 !== '装备') return null;
+    if (!(片.槽 in 块)) return null;
+    块[片.槽] = 片.编号;
+    return g;
+  }
+  function 卸下装备(g, 人物, 槽) {
+    人物 = 人物 || '主角';
+    var 块 = 装备块Of(g, 人物);
+    if (!块 || !(槽 in 块)) return null;
+    块[槽] = null;
+    return g;
+  }
+  /* 某人物可穿但尚未穿的装备（用于渲染「装备」按钮） */
+  function 可装物品(g, 人物) {
+    var 块 = 装备块Of(g, 人物) || {};
+    return (g.物品 || []).filter(function (i) {
+      return i.类型 === '装备' && i.持有者 === 人物 && i.槽 && 块[i.槽] !== i.编号;
+    });
+  }
+  /* 槽位四格 HTML（人物 + 前缀用于 data 属性） */
+  function 装备槽HTML(g, 人物) {
+    var 块 = 装备块Of(g, 人物) || {};
+    return ['武器', '副手', '护甲', '饰品'].map(function (槽) {
+      var 编号 = 块[槽];
+      var 片 = 编号 ? 物品By编号(g, 编号) : null;
+      return '<div class="unit"><div class="nm">' + 槽 + '</div>'
+        + (片
+            ? '<div class="sub"><b>' + esc(片.名称) + '</b> <button class="eqbtn" data-unequip="' + esc(槽) + '" data-who="' + esc(人物) + '">卸下</button></div>'
+            : '<div class="sub muted">空</div>')
+        + '</div>';
+    }).join('');
+  }
+
+  /* ── 删除物品（纯函数，可单测）：删掉该件；若正被穿着则同时清空对应槽位 ── */
+  function 删除物品(g, 编号) {
+    var 片 = 物品By编号(g, 编号);
+    if (!片) return null;
+    g.物品 = g.物品.filter(function (i) { return i.编号 !== 编号; });
+    ['主角', '爱丽丝'].forEach(function (人物) {
+      var 块 = 装备块Of(g, 人物);
+      if (!块) return;
+      ['武器', '副手', '护甲', '饰品'].forEach(function (槽) {
+        if (块[槽] === 编号) 块[槽] = null;
+      });
+    });
+    return g;
+  }
+
+  /* ── 使用消耗品（纯函数，可单测）：删掉该件 + 记一条「动作」（每轮清空，供 EJS 注入世界书） ── */
+  function 使用消耗品(g, 编号, 人物) {
+    人物 = 人物 || '主角';
+    var 片 = 物品By编号(g, 编号);
+    if (!片 || 片.持有者 !== 人物 || 片.类型 !== '消耗品') return null;
+    g.物品 = g.物品.filter(function (i) { return i.编号 !== 编号; });
+    if (!g.动作) g.动作 = [];
+    g.动作.push({
+      类型: '使用消耗品',
+      名称: 片.名称,
+      编号: 片.编号,
+      说明: 片.描述 || '',
+      时刻: (g.时刻 && g.时刻.当前时刻) || '',
+    });
+    return g;
   }
 
   /* ── 派生（与引擎口径一致） ── */
@@ -153,7 +292,10 @@ function getCurrentMessageId() { return 0; }
     /* 主角 */
     var 主 = g.主角 || {};
     var 装备 = Object.keys(主.装备 || {}).filter(function (k) { return 主.装备[k]; })
-      .map(function (k) { return k + '：' + esc(主.装备[k]); }).join('　') || '无';
+      .map(function (k) {
+        var 片 = 物品By编号(g, 主.装备[k]);
+        return k + '：' + (片 ? esc(片.名称) : esc(主.装备[k]));
+      }).join('　') || '无';
     var 技能 = (主.技能 || []).map(function (s) { return esc(s.名称) + '(' + esc(s.等阶) + ')'; }).join('、') || '无';
     h.push('<div class="card"><h4>主角</h4>'
       + '<div class="row">' + 属性名.map(function (n) {
@@ -168,21 +310,54 @@ function getCurrentMessageId() { return 0; }
 
     /* 物品 */
     var 物品 = g.物品 || [];
+    var 主装 = (g.主角 && g.主角.装备) || {};
     function 组(类型) {
       var l = 物品.filter(function (i) { return i.类型 === 类型; });
       if (!l.length) return '<span class="muted">（无）</span>';
       return l.map(function (i) {
-        return '<span class="tag">' + esc(i.名称) + '×' + i.数量
+        var 本人 = (i.持有者 === '主角');
+        var 可装 = (类型 === '装备' && 本人 && i.槽 && 主装[i.槽] !== i.编号);
+        var 可用 = (类型 === '消耗品' && 本人);
+        return '<span class="tag">' + esc(i.名称)
           + (i.槽 ? '[' + esc(i.槽) + ']' : '')
-          + (i.持有者 && i.持有者 !== '主角' ? '（' + esc(i.持有者) + '）' : '')
-          + (i.描述 ? ' — ' + esc(i.描述) : '') + '</span>';
+          + (i.持有者 && !本人 ? '（' + esc(i.持有者) + '）' : '')
+          + (i.描述 ? ' — ' + esc(i.描述) : '')
+          + (可装 ? ' <button class="eqbtn" data-equip="' + esc(i.编号) + '" data-who="主角">装备</button>' : '')
+          + (可用 ? ' <button class="eqbtn" data-use="' + esc(i.编号) + '" data-who="主角">使用</button>' : '')
+          + (删除模式 ? ' <button class="eqbtn del" data-del="' + esc(i.编号) + '">删除</button>' : '')
+          + '</span>';
       }).join('');
     }
-    h.push('<div class="card"><h4>物品</h4>'
-      + '<div class="row"><span class="kv">装备</span>' + 组('装备') + '</div>'
-      + '<div class="row"><span class="kv">消耗品</span>' + 组('消耗品') + '</div>'
-      + '<div class="row"><span class="kv">材料</span>' + 组('材料') + '</div>'
-      + '<div class="row"><span class="kv">特殊</span>' + 组('特殊') + '</div>'
+    /* 已装备（主角四槽；点「卸下」当场写回存档） */
+    h.push('<div class="card"><h4>已装备（主角）</h4>'
+      + '<div class="grid2">' + 装备槽HTML(g, '主角') + '</div></div>');
+
+    var 物品计数 = ['装备', '消耗品', '材料', '特殊'].map(function (t) {
+      return t + '×' + 物品.filter(function (i) { return i.类型 === t; }).length;
+    }).join('　');
+    h.push('<div class="card"><h4 style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">物品'
+      + '<button class="eqbtn" data-fold="1">' + (物品折叠 ? '展开' : '折叠') + '</button>'
+      + '<button class="eqbtn' + (删除模式 ? ' del' : '') + '" data-delmode="1">' + (删除模式 ? '退出删除模式' : '删除模式') + '</button>'
+      + (物品折叠 ? '<span class="sub muted" style="font-weight:400">' + 物品计数 + '</span>' : '')
+      + '</h4>'
+      + (物品折叠 ? '' : (
+            (删除模式 ? '<div class="sub" style="color:#e88a8a;margin-bottom:4px">删除模式：点物品后的「删除」即刻移除，无二次确认</div>' : '')
+          + '<div class="row"><span class="kv">装备</span>' + 组('装备') + '</div>'
+          + '<div class="row"><span class="kv">消耗品</span>' + 组('消耗品') + '</div>'
+          + '<div class="row"><span class="kv">材料</span>' + 组('材料') + '</div>'
+          + '<div class="row"><span class="kv">特殊</span>' + 组('特殊') + '</div>'))
+      + '</div>');
+
+    /* 动作流水（每轮清空；状态栏操作记录，EJS 世界书条目读快照注入正文AI） */
+    var 动作 = g.动作 || [];
+    h.push('<div class="card"><h4>动作（本轮）</h4>'
+      + (动作.length
+          ? 动作.map(function (a) {
+              return '<div class="sub">· ' + esc(a.类型) + '「' + esc(a.名称) + '」'
+                + (a.说明 ? ' — ' + esc(a.说明) : '')
+                + (a.时刻 ? '　<span class="muted">' + esc(a.时刻) + '</span>' : '') + '</div>';
+            }).join('')
+          : '<span class="muted">（无 —— 每回合开始时自动清空）</span>')
       + '</div>');
 
     /* 已遇见人物（按立场分组；死亡灰显） */
@@ -201,13 +376,28 @@ function getCurrentMessageId() { return 0; }
         ? '<div class="sub">关系：<b>' + esc(b['和主角的关系']) + '</b></div>' : '';
       var 技能 = (b.技能 || []).length
         ? '<div class="sub">技能：' + b.技能.map(function (s) { return esc(s.名称) + '(' + esc(s.等阶) + ')'; }).join('、') + '</div>' : '';
+      // 有装备系统的同伴（爱丽丝）就地给出四槽 + 可装备品
+      var 装备区 = '';
+      if (b.装备) {
+        var 可装 = 可装物品(g, 名);
+        装备区 = '<div class="sub" style="margin-top:4px">装备：</div><div class="grid2">' + 装备槽HTML(g, 名) + '</div>'
+          + (可装.length
+              ? '<div class="sub">可装：' + 可装.map(function (i) {
+                  return '<span class="tag">' + esc(i.名称) + '[' + esc(i.槽) + ']'
+                    + ' <button class="eqbtn" data-equip="' + esc(i.编号) + '" data-who="' + esc(名) + '">装备</button>'
+                    + (删除模式 ? ' <button class="eqbtn del" data-del="' + esc(i.编号) + '">删除</button>' : '')
+                    + '</span>';
+                }).join('') + '</div>'
+              : '');
+      }
       return '<div class="unit' + (死 ? ' dead' : '') + '">'
         + '<div class="nm">' + esc(名) + ' <span class="sub">' + esc(b.立场) + (死 ? ' · 已死亡' : '') + '</span></div>'
         + '<div class="sub">力' + 属性文本(g, b, '力量') + ' 敏' + 属性文本(g, b, '敏捷')
         + ' 体' + 属性文本(g, b, '体质') + ' 智' + 属性文本(g, b, '智力') + 临时 + '</div>'
         + (b.状态 && !死 ? '<div class="sub">状态：' + esc(b.状态) + '</div>' : '')
         + 关系
-        + 技能 + '</div>';
+        + 技能
+        + 装备区 + '</div>';
     }
     h.push('<div class="card"><h4>已遇见</h4>'
       + (已.length === 0 ? '<span class="muted">（尚未遇见任何人）</span>' : '')
@@ -225,7 +415,33 @@ function getCurrentMessageId() { return 0; }
     var g = readSnapshot() || readChat();
     if (!g) { el.innerHTML = '（艾瑟兰状态栏：未读取到存档，先在扩展「战役」页初始化开局）'; return; }
     el.innerHTML = 渲染(g);
+    if (el._aeEquipWired) return;                  // 事件只绑一次
+    el._aeEquipWired = true;
+    el.addEventListener('click', function (e) {
+      var t = e.target;
+      // 纯界面开关：折叠 / 删除模式（不写存档）
+      if (t && t.getAttribute && t.getAttribute('data-fold')) { 物品折叠 = !物品折叠; main(); return; }
+      if (t && t.getAttribute && t.getAttribute('data-delmode')) { 删除模式 = !删除模式; main(); return; }
+
+      var 装备编号 = t && t.getAttribute && t.getAttribute('data-equip');
+      var 使用编号 = t && t.getAttribute && t.getAttribute('data-use');
+      var 删除编号 = t && t.getAttribute && t.getAttribute('data-del');
+      var 槽 = t && t.getAttribute && t.getAttribute('data-unequip');
+      var 人物 = (t && t.getAttribute && t.getAttribute('data-who')) || '主角';
+      if (!装备编号 && !使用编号 && !删除编号 && !槽) return;
+      var out = writeGame(function (g) {
+        if (删除编号) return 删除物品(g, 删除编号);
+        if (使用编号) return 使用消耗品(g, 使用编号, 人物);
+        if (装备编号) return 装备物品(g, 装备编号, 人物);
+        return 卸下装备(g, 人物, 槽);
+      });
+      if (!out) { try { alert('操作失败：物品不存在、类型/持有者不符或槽位不匹配'); } catch (e2) {} return; }
+      main();                                       // 用最新存档重渲染
+    });
   }
+  /* 暴露纯函数供自测（scripts/test-aiselan-statusbar.mjs） */
+  try { window.__AI_EQUIP__ = { 装备物品: 装备物品, 卸下装备: 卸下装备, 可装物品: 可装物品, 使用消耗品: 使用消耗品, 删除物品: 删除物品, writeGame: writeGame,
+  设置删除模式: function (v) { 删除模式 = !!v; main(); }, 设置物品折叠: function (v) { 物品折叠 = !!v; main(); } }; } catch (e) {}
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', main);
   } else {

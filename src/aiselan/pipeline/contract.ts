@@ -88,6 +88,7 @@ export const 变更包Schema = z.object({
   时钟: 时钟变更.optional(),
   推演: 推演变更.optional(),
   属性: 属性变化.optional(),
+  主角状态: z.string().optional(),        // 自由文本；'健康' 即恢复正常
 
   临时加成新增: z.array(临时加成新增项).optional(),
   临时加成移除: z.array(z.string()).optional(),
