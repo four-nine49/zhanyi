@@ -15,7 +15,7 @@ export function renderToolsPage(el: HTMLElement): void {
   el.innerHTML = `<div style="padding:16px;max-width:680px">
     <div style="display:flex;align-items:center;margin-bottom:4px">
       <div class="of-h1" style="margin:0">工具</div>
-      <span class="of-badge of-badge-idle" style="margin-left:10px">开局框架 v${VERSION}</span>
+      <span class="of-badge of-badge-idle" style="margin-left:10px">艾瑟兰战役 v${VERSION}</span>
     </div>
     <div class="of-hint" style="margin-bottom:16px">手动填表、楼层变量同步、清理等实用操作都在这一页。</div>
 
