@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>艾瑟兰战役 · 状态栏（毛坯版）</title>
+<style>
+  /* 毛坯版：只做信息结构与可读性，不做美术。全部样式限定在 #aiselan-bar 内，不碰 body/视口。 */
+  #aiselan-bar{--line:#3a4352;--ink:#d6dce6;--dim:#8a94a6;--card:#1b2029;--bg:#12161d;
+    background:var(--bg);color:var(--ink);font:14px/1.65 "Microsoft YaHei",system-ui,sans-serif;
+    padding:10px;border-radius:8px;max-width:720px;margin:8px auto;border:1px solid var(--line);}
+  #aiselan-bar *{box-sizing:border-box;}
+  #aiselan-bar .card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-bottom:8px;}
+  #aiselan-bar h4{margin:0 0 6px;font-size:13px;color:#9ecbff;letter-spacing:1px;font-weight:600;
+    border-bottom:1px dashed var(--line);padding-bottom:4px;}
+  #aiselan-bar .row{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13px;}
+  #aiselan-bar .kv{color:var(--dim);} #aiselan-bar .kv b{color:var(--ink);font-weight:600;}
+  #aiselan-bar .muted{color:var(--dim);}
+  #aiselan-bar .badge{border:1px solid var(--line);border-radius:9px;padding:1px 9px;font-size:12px;color:var(--dim);}
+  #aiselan-bar .badge.ok{color:#8fd694;border-color:#8fd694;}
+  #aiselan-bar .badge.warn{color:#e8c76a;border-color:#e8c76a;}
+  #aiselan-bar .badge.bad{color:#e88a8a;border-color:#e88a8a;}
+  #aiselan-bar .bar{height:9px;background:#0c0f14;border:1px solid var(--line);border-radius:5px;overflow:hidden;margin:3px 0;position:relative;}
+  #aiselan-bar .bar i{display:block;height:100%;}
+  #aiselan-bar .bar .tick{position:absolute;top:-1px;bottom:-1px;width:1px;background:#5a6478;}
+  #aiselan-bar .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;}
+  #aiselan-bar .unit{border:1px solid var(--line);border-radius:5px;padding:6px 8px;font-size:12px;}
+  #aiselan-bar .unit .nm{font-weight:600;font-size:13px;}
+  #aiselan-bar .unit.dead{opacity:.45;}
+  #aiselan-bar .tag{display:inline-block;border:1px solid var(--line);border-radius:4px;padding:0 5px;margin:0 2px 2px 0;font-size:11px;color:var(--dim);}
+  #aiselan-bar .clocks{display:flex;gap:4px;align-items:center;}
+  #aiselan-bar .cell{width:16px;height:16px;border:1px solid var(--line);border-radius:3px;display:inline-block;background:#0c0f14;}
+  #aiselan-bar .cell.on{background:#e06c75;border-color:#e06c75;}
+  #aiselan-bar .cell.on.s2{background:#e5c07b;border-color:#e5c07b;}
+  #aiselan-bar .sub{font-size:11px;color:var(--dim);}
+</style>
+</head>
+<body>
+<div id="aiselan-bar">（艾瑟兰状态栏：未读取到存档）</div>
+<script>
+(function () {
+  'use strict';
+  /* ── 常量表（与引擎口径一致，纯展示） ── */
+  var NS = '艾瑟兰';
+  var 阶段名 = ['风暴眼', '混乱期', '混乱期', '沦陷期·水源带毒', '沦陷期·焚城', '收束期·幼体降临', '终局·火炮洗地'];
+  var 肃清名 = ['追查中', '锁定玩家', '围捕', '全域神圣轰炸'];
+  var 属性名 = ['力量', '敏捷', '体质', '智力'];
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /* ── 数据读取：快照三层回退（当前楼 → -1 → -2 → -3），再回退 chat 变量（只读，不写） ── */
+  function readSnapshot() {
+    try {
+      var ids = [];
+      try { ids.push(getCurrentMessageId()); } catch (e) {}
+      ids.push(-1, -2, -3);
+      for (var i = 0; i < ids.length; i++) {
+        var v = getVariables({ type: 'message', message_id: ids[i] });
+        var s = v && v.stat_data && v.stat_data[NS];
+        if (s) return s;
+      }
+    } catch (e) {}
+    return null;
+  }
+  function readChat() {
+    try { var v = getVariables({ type: 'chat' }); return v ? v[NS] || null : null; } catch (e) { return null; }
+  }
+
+  /* ── 派生（与引擎口径一致） ── */
+  function 算力上限(g) { return 20 * ((g.主角 && g.主角.属性 && g.主角.属性.智力) || 0); }
+  function 世界状态(g) {
+    var c = (g.算力 && g.算力.累计消耗) || 0;
+    return c >= 250 ? '裂隙' : c >= 100 ? '异象' : '微澜';
+  }
+  function 生效(g, 名, 对象) {
+    var 基 = (对象.属性 && 对象.属性[名]) || 0;
+    var 加 = (对象.临时加成 || []).filter(function (b) { return b.属性 === 名; })
+      .reduce(function (s, b) { return s + (b.值 || 0); }, 0);
+    return { 基: 基, 生: 基 + 加, 加: 加 };
+  }
+  function 属性文本(g, 对象, 名) {
+    var r = 生效(g, 名, 对象);
+    return r.加 !== 0 ? (r.基 + '(' + (r.加 > 0 ? '+' : '') + r.加 + ')') : String(r.基);
+  }
+
+  function 时钟格(格数, 上限, cls) {
+    var s = '';
+    for (var i = 0; i < 上限; i++) s += '<span class="cell' + (i < 格数 ? ' on ' + (cls || '') : '') + '"></span>';
+    return s;
+  }
+  function 进度条(值, 上限, 色, 刻度列表) {
+    var p = 上限 > 0 ? Math.min(100, Math.round(值 / 上限 * 100)) : 0;
+    var ticks = (刻度列表 || []).map(function (t) {
+      return '<span class="tick" style="left:' + Math.min(100, Math.round(t / 上限 * 100)) + '%"></span>';
+    }).join('');
+    return '<div class="bar">' + ticks + '<i style="width:' + p + '%;background:' + 色 + '"></i></div>';
+  }
+
+  /* ── 渲染 ── */
+  function 渲染(g) {
+    var h = [];
+    var 世界 = 世界状态(g);
+    var 世界cls = 世界 === '裂隙' ? 'bad' : 世界 === '异象' ? 'warn' : 'ok';
+
+    /* 顶栏：时刻 / 位置 / 世界状态 */
+    h.push('<div class="card"><div class="row">'
+      + '<span class="kv">时刻 <b>' + esc(g.时刻 && g.时刻.当前时刻) + '</b></span>'
+      + '<span class="kv">位置 <b>' + esc(g.位置 && (g.位置.区域 + ' · ' + g.位置.当前)) + '</b></span>'
+      + '<span class="badge ' + 世界cls + '">' + 世界 + '</span>'
+      + '</div></div>');
+
+    /* 时钟 */
+    var 陷 = (g.时钟 && g.时钟.维尔伦陷落度) || 0;
+    var 肃 = (g.时钟 && g.时钟.教会肃清进度) || 0;
+    h.push('<div class="card"><h4>时钟</h4>'
+      + '<div class="row"><span class="kv">维尔伦陷落度 <b>' + 陷 + '/6</b></span>'
+      + '<span class="clocks">' + 时钟格(陷, 6, '') + '</span>'
+      + '<span class="sub">' + (阶段名[Math.max(0, Math.min(6, 陷))] || '') + '</span></div>'
+      + '<div class="row"><span class="kv">教会肃清进度 <b>' + 肃 + '/3</b></span>'
+      + '<span class="clocks">' + 时钟格(肃, 3, 's2') + '</span>'
+      + '<span class="sub">' + (肃清名[Math.max(0, Math.min(3, 肃))] || '') + '</span></div>'
+      + '</div>');
+
+    /* 算力 */
+    var 上 = 算力上限(g);
+    var 当 = (g.算力 && g.算力.当前算力) || 0;
+    var 累 = (g.算力 && g.算力.累计消耗) || 0;
+    h.push('<div class="card"><h4>算力</h4>'
+      + '<div class="row"><span class="kv">当前 <b>' + 当 + '</b> / ' + 上
+      + '　速率 ' + esc(g.算力 && g.算力.速率) + '/小时</span></div>'
+      + 进度条(当, 上, '#6ea8fe')
+      + '<div class="row"><span class="kv">累计消耗 <b>' + 累 + '</b>　<span class="sub">异象 100｜裂隙 250</span></span></div>'
+      + 进度条(累, 250, '#b58cf0', [100, 250])
+      + '</div>');
+
+    /* 主角 */
+    var 主 = g.主角 || {};
+    var 装备 = Object.keys(主.装备 || {}).filter(function (k) { return 主.装备[k]; })
+      .map(function (k) { return k + '：' + esc(主.装备[k]); }).join('　') || '无';
+    var 技能 = (主.技能 || []).map(function (s) { return esc(s.名称) + '(' + esc(s.等阶) + ')'; }).join('、') || '无';
+    h.push('<div class="card"><h4>主角</h4>'
+      + '<div class="row">' + 属性名.map(function (n) {
+          return '<span class="kv">' + n + ' <b>' + 属性文本(g, 主, n) + '</b></span>';
+        }).join('') + '</div>'
+      + (主.状态 ? '<div class="row"><span class="kv">状态 <b>' + esc(主.状态) + '</b></span></div>' : '')
+      + '<div class="row"><span class="kv">装备 ' + 装备 + '</span></div>'
+      + '<div class="row"><span class="kv">技能 ' + 技能 + '</span></div>'
+      + '<div class="row"><span class="kv">精练师 ' + esc(主.精练师等级) + '</span>'
+      + '<span class="kv">知识库 ' + esc((主.已解锁知识库 || []).join('、')) + '</span></div>'
+      + '</div>');
+
+    /* 物品 */
+    var 物品 = g.物品 || [];
+    function 组(类型) {
+      var l = 物品.filter(function (i) { return i.类型 === 类型; });
+      if (!l.length) return '<span class="muted">（无）</span>';
+      return l.map(function (i) {
+        return '<span class="tag">' + esc(i.名称) + '×' + i.数量
+          + (i.槽 ? '[' + esc(i.槽) + ']' : '')
+          + (i.持有者 && i.持有者 !== '主角' ? '（' + esc(i.持有者) + '）' : '')
+          + (i.描述 ? ' — ' + esc(i.描述) : '') + '</span>';
+      }).join('');
+    }
+    h.push('<div class="card"><h4>物品</h4>'
+      + '<div class="row"><span class="kv">装备</span>' + 组('装备') + '</div>'
+      + '<div class="row"><span class="kv">消耗品</span>' + 组('消耗品') + '</div>'
+      + '<div class="row"><span class="kv">材料</span>' + 组('材料') + '</div>'
+      + '<div class="row"><span class="kv">特殊</span>' + 组('特殊') + '</div>'
+      + '</div>');
+
+    /* 已遇见人物（按立场分组；死亡灰显） */
+    var 已 = [];
+    var 生物 = g.生物 || {};
+    Object.keys(生物).forEach(function (名) { if (生物[名] && 生物[名].已遇见) 已.push([名, 生物[名]]); });
+    var 同伴 = 已.filter(function (x) { return x[1].立场 === '同伴'; });
+    var 敌对 = 已.filter(function (x) { return x[1].立场 !== '同伴'; });
+    function 卡(x) {
+      var 名 = x[0], b = x[1];
+      var 死 = b.状态 === '死亡';
+      var 临时 = (b.临时加成 || []).length
+        ? '　临时：' + b.临时加成.map(function (t) { return 属性名.indexOf(t.属性) >= 0 ? (t.属性 + (t.值 > 0 ? '+' : '') + t.值) : ''; }).join('、')
+        : '';
+      var 技能 = (b.技能 || []).length
+        ? '<div class="sub">技能：' + b.技能.map(function (s) { return esc(s.名称) + '(' + esc(s.等阶) + ')'; }).join('、') + '</div>' : '';
+      return '<div class="unit' + (死 ? ' dead' : '') + '">'
+        + '<div class="nm">' + esc(名) + ' <span class="sub">' + esc(b.立场) + (死 ? ' · 已死亡' : '') + '</span></div>'
+        + '<div class="sub">力' + 属性文本(g, b, '力量') + ' 敏' + 属性文本(g, b, '敏捷')
+        + ' 体' + 属性文本(g, b, '体质') + ' 智' + 属性文本(g, b, '智力') + 临时 + '</div>'
+        + (b.状态 && !死 ? '<div class="sub">状态：' + esc(b.状态) + '</div>' : '')
+        + 技能 + '</div>';
+    }
+    h.push('<div class="card"><h4>已遇见</h4>'
+      + (已.length === 0 ? '<span class="muted">（尚未遇见任何人）</span>' : '')
+      + (同伴.length ? '<div class="sub" style="margin:2px 0 4px">同伴</div><div class="grid2">' + 同伴.map(卡).join('') + '</div>' : '')
+      + (敌对.length ? '<div class="sub" style="margin:6px 0 4px">敌对</div><div class="grid2">' + 敌对.map(卡).join('') + '</div>' : '')
+      + '</div>');
+
+    return h.join('');
+  }
+
+  /* ── 挂载 ── */
+  function main() {
+    var el = document.getElementById('aiselan-bar');
+    if (!el) return;
+    var g = readSnapshot() || readChat();
+    if (!g) { el.innerHTML = '（艾瑟兰状态栏：未读取到存档，先在扩展「战役」页初始化开局）'; return; }
+    el.innerHTML = 渲染(g);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', main);
+  } else {
+    main();
+  }
+  /* 楼内重复渲染兜底（换页/编辑后） */
+  window.addEventListener('pageshow', main);
+})();
+</script>
+</body>
+</html>

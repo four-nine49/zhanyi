@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>艾瑟兰战役 · 开局</title>
+<style>
+  /* 毛坯版：只做信息结构与可读性，不做美术。样式限定在 #aiselan-opening 内。 */
+  #aiselan-opening{--line:#3a4352;--ink:#d6dce6;--dim:#8a94a6;--card:#1b2029;--bg:#12161d;--ok:#8fd694;--warn:#e8c76a;--bad:#e88a8a;
+    background:var(--bg);color:var(--ink);font:14px/1.7 "Microsoft YaHei",system-ui,sans-serif;
+    padding:12px;border-radius:8px;max-width:720px;margin:8px auto;border:1px solid var(--line);}
+  #aiselan-opening *{box-sizing:border-box;}
+  #aiselan-opening h3{margin:0 0 4px;font-size:15px;color:#9ecbff;letter-spacing:1px;}
+  #aiselan-opening .sub{font-size:12px;color:var(--dim);}
+  #aiselan-opening .sec{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:9px 11px;margin-bottom:9px;}
+  #aiselan-opening .sec h4{margin:0 0 6px;font-size:13px;color:#9ecbff;font-weight:600;border-bottom:1px dashed var(--line);padding-bottom:4px;}
+  #aiselan-opening textarea{width:100%;min-height:88px;background:#0c0f14;border:1px solid var(--line);color:var(--ink);
+    border-radius:6px;padding:8px;font:13px/1.7 inherit;resize:vertical;}
+  #aiselan-opening .gbtn{border:1px solid var(--line);background:#151a22;color:var(--dim);border-radius:6px;
+    padding:6px 22px;font-size:14px;cursor:pointer;margin-right:8px;}
+  #aiselan-opening .gbtn.on{border-color:#9ecbff;color:#9ecbff;background:#101a24;font-weight:600;}
+  #aiselan-opening .arow{display:flex;align-items:center;gap:8px;margin:5px 0;}
+  #aiselan-opening .arow .nm{width:44px;color:var(--dim);font-size:13px;}
+  #aiselan-opening .stp{width:28px;height:28px;border:1px solid var(--line);background:#151a22;color:var(--ink);
+    border-radius:5px;font-size:16px;line-height:1;cursor:pointer;}
+  #aiselan-opening .stp:disabled{opacity:.35;cursor:not-allowed;}
+  #aiselan-opening .aval{width:44px;text-align:center;font-size:16px;font-weight:700;}
+  #aiselan-opening .hint{font-size:12px;color:var(--dim);margin-left:6px;}
+  #aiselan-opening .remain{font-size:13px;margin-bottom:4px;}
+  #aiselan-opening .remain b{font-size:16px;}
+  #aiselan-opening .start{width:100%;padding:10px;border-radius:6px;border:1px solid var(--ok);background:#14201a;
+    color:var(--ok);font-size:15px;font-weight:600;cursor:pointer;}
+  #aiselan-opening .start:disabled{border-color:var(--line);background:#151a22;color:#5a6478;cursor:not-allowed;}
+  #aiselan-opening #ae-o-msg{font-size:12px;margin-top:8px;min-height:18px;}
+  #aiselan-opening .warnbar{border:1px solid var(--warn);color:var(--warn);border-radius:6px;padding:6px 10px;font-size:12px;margin-bottom:9px;}
+  #aiselan-opening .done{border-color:var(--ok);color:var(--ok);}
+</style>
+</head>
+<body>
+<div id="aiselan-opening">（艾瑟兰开局：尚未加载）</div>
+<script>
+(function () {
+  'use strict';
+  /* 默认存档模板由 build.mjs 从 core/schema.ts 的「开局存档」注入（单一事实来源） */
+  var 默认存档 = {"version":1,"时刻":{"当前时刻":"1042年11月29日 14:20","累计分钟":0},"位置":{"当前":"审判广场","区域":"下层"},"时钟":{"维尔伦陷落度":0,"教会肃清进度":0},"算力":{"当前算力":0,"速率":10,"累计消耗":0,"推演记录":[]},"物品":[],"主角":{"性别":"男","属性":{"力量":8,"敏捷":8,"体质":8,"智力":11},"临时加成":[],"状态":"","技能":[],"装备":{"武器":null,"副手":null,"护甲":null,"饰品":null},"精练师等级":"无","已解锁知识库":["地球"]},"生物":{"爱丽丝":{"类型":"核心","立场":"同伴","已遇见":false,"状态":"","属性":{"力量":8,"敏捷":14,"体质":10,"智力":15},"临时加成":[],"技能":[],"装备":{"武器":null,"副手":null,"护甲":null,"饰品":null}},"诺拉":{"类型":"重要","立场":"同伴","已遇见":false,"状态":"","属性":{"力量":6,"敏捷":11,"体质":8,"智力":13},"临时加成":[],"技能":[]},"瓦尔特":{"类型":"重要","立场":"同伴","已遇见":false,"状态":"","属性":{"力量":12,"敏捷":7,"体质":11,"智力":10},"临时加成":[],"技能":[]},"提尔雅":{"类型":"重要","立场":"同伴","已遇见":false,"状态":"","属性":{"力量":7,"敏捷":12,"体质":8,"智力":9},"临时加成":[],"技能":[]},"维克托":{"类型":"重要","立场":"敌对","已遇见":false,"状态":"","属性":{"力量":12,"敏捷":11,"体质":12,"智力":14},"临时加成":[],"技能":[]},"马利基":{"类型":"重要","立场":"敌对","已遇见":false,"状态":"","属性":{"力量":14,"敏捷":12,"体质":14,"智力":16},"临时加成":[],"技能":[]},"虚空暴食魔":{"类型":"生物","立场":"敌对","已遇见":false,"状态":"关押于教会地下室","属性":{"力量":15,"敏捷":7,"体质":16,"智力":4},"临时加成":[],"技能":[]},"异界幼体":{"类型":"生物","立场":"敌对","已遇见":false,"状态":"未降临","属性":{"力量":17,"敏捷":15,"体质":17,"智力":12},"临时加成":[],"技能":[]}}};
+  var 总点数 = 40;
+  var 属性名 = ['力量', '敏捷', '体质', '智力'];
+  var 单项上限 = 13;   // 本卷天花板
+  var 单项下限 = 1;
+  var 开场白占位 = '火把落下。火焰没有吞噬那个女孩，而是化成了柔和厚重的暗金色。第三排的神甫手里的圣经掉在了地上。台上的执行官维克托脸色惨白，猛地拔出腰间佩剑。同一秒，脚下的广场发出巨兽撕裂般的巨响——中央塌陷了，黑色浓烟喷涌而出。';
+
+  var el = document.getElementById('aiselan-opening');
+  if (!el) return;
+
+  /* ── 状态 ── */
+  var S = { 男: '男', 性别: null, 属性: { 力量: 10, 敏捷: 10, 体质: 10, 智力: 10 } };
+  var 已开局 = false;
+  try {
+    var chat = (typeof getVariables === 'function') ? getVariables({ type: 'chat' }) : null;
+    已开局 = !!(chat && chat['艾瑟兰']);
+  } catch (e) {}
+
+  function 用了() { var s = 0; 属性名.forEach(function (n) { s += S.属性[n]; }); return s; }
+  function 剩余() { return 总点数 - 用了(); }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function 渲染() {
+    var 剩 = 剩余();
+    el.innerHTML = ''
+      + '<h3>艾瑟兰战役 · 开局</h3>'
+      + '<div class="sub">第一卷 · 维尔伦沦陷沙盘 ｜ 余烬节 · 审判广场</div>'
+      + (已开局 ? '<div class="warnbar">检测到已有存档：确认开局会覆盖当前进度。</div>' : '')
+      + '<div class="sec"><h4>开场白（写入第 0 楼）</h4>'
+      + '<textarea id="ae-o-text">' + esc(开场白占位) + '</textarea>'
+      + '<div class="sub" style="margin-top:4px">占位文本，之后替换为正式开场；玩家可自行编辑后再确认。</div></div>'
+      + '<div class="sec"><h4>性别</h4>'
+      + '<button class="gbtn' + (S.性别 === '男' ? ' on' : '') + '" data-gender="男">男</button>'
+      + '<button class="gbtn' + (S.性别 === '女' ? ' on' : '') + '" data-gender="女">女</button>'
+      + '<span class="sub" style="margin-left:8px">纯叙事选项，第一卷无数值影响</span></div>'
+      + '<div class="sec"><h4>四维属性（共 ' + 总点数 + ' 点，单项 ' + 单项下限 + '–' + 单项上限 + '）</h4>'
+      + '<div class="remain">剩余点数 <b id="ae-o-remain" style="color:' + (剩 === 0 ? 'var(--ok)' : 剩 < 0 ? 'var(--bad)' : 'var(--warn)') + '">' + 剩 + '</b>'
+      + '　<span class="sub">建议：力敏体 8–9、智 10–12；本卷天花板 13</span></div>'
+      + 属性名.map(function (n) {
+          return '<div class="arow"><span class="nm">' + n + '</span>'
+            + '<button class="stp" data-dec="' + n + '"' + (S.属性[n] <= 单项下限 ? ' disabled' : '') + '>−</button>'
+            + '<span class="aval">' + S.属性[n] + '</span>'
+            + '<button class="stp" data-inc="' + n + '"' + (S.属性[n] >= 单项上限 || 剩 <= 0 ? ' disabled' : '') + '>＋</button>'
+            + '<span class="hint">' + 属性说明(n, S.属性[n]) + '</span></div>';
+        }).join('')
+      + '</div>'
+      + '<button class="start" id="ae-o-start"' + (剩余() === 0 && S.性别 ? '' : ' disabled') + '>确认开局</button>'
+      + '<div id="ae-o-msg"></div>';
+    绑定();
+  }
+
+  /* 世界标尺提示（《艾瑟兰设定集》四维标尺） */
+  function 属性说明(名, 值) {
+    var 标 = {
+      力量: [[5, '严重缺陷'], [8, '普通基准'], [13, '普通人极限'], [16, '怪物领域'], [20, '半神']],
+      敏捷: [[5, '严重缺陷'], [8, '普通基准'], [13, '普通人极限'], [16, '怪物领域'], [20, '半神']],
+      体质: [[5, '严重缺陷'], [8, '普通基准'], [13, '普通人极限'], [16, '怪物领域'], [20, '半神']],
+      智力: [[5, '无法施法'], [8, '普通基准'], [13, '普通人极限'], [16, '怪物领域'], [20, '半神']],
+    }[名];
+    var 名2 = '';
+    for (var i = 0; i < 标.length; i++) if (值 >= 标[i][0]) 名2 = 标[i][1];
+    return 名2;
+  }
+
+  function 绑定() {
+    el.querySelectorAll('[data-gender]').forEach(function (b) {
+      b.addEventListener('click', function () { S.性别 = b.getAttribute('data-gender'); 渲染(); });
+    });
+    el.querySelectorAll('[data-inc]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var n = b.getAttribute('data-inc');
+        if (剩余() > 0 && S.属性[n] < 单项上限) { S.属性[n]++; 渲染(); }
+      });
+    });
+    el.querySelectorAll('[data-dec]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var n = b.getAttribute('data-dec');
+        if (S.属性[n] > 单项下限) { S.属性[n]--; 渲染(); }
+      });
+    });
+    var st = el.querySelector('#ae-o-start');
+    if (st) st.addEventListener('click', 确认开局);
+  }
+
+  function 报(文字, 色) {
+    var m = el.querySelector('#ae-o-msg');
+    if (m) { m.textContent = 文字; m.style.color = 色 || 'var(--dim)'; }
+    try { if (色 === 'var(--bad)') toastr && toastr.error && toastr.error(文字); else toastr && toastr.success && toastr.success(文字); } catch (e) {}
+  }
+
+  /* ═══════════ 确认开局：写存档 + 开场白落 0 楼 + 快照 ═══════════ */
+  function 确认开局() {
+    if (剩余() !== 0) { 报('还有 ' + 剩余() + ' 点未分配', 'var(--bad)'); return; }
+    if (!S.性别) { 报('请选择性别', 'var(--bad)'); return; }
+    if (typeof updateVariablesWith !== 'function') { 报('需要酒馆助手环境（请在酒馆楼层内打开）', 'var(--bad)'); return; }
+
+    var 文本 = (el.querySelector('#ae-o-text') || {}).value || 开场白占位;
+    var g = JSON.parse(JSON.stringify(默认存档));
+    g.主角.性别 = S.性别;
+    g.主角.属性 = { 力量: S.属性.力量, 敏捷: S.属性.敏捷, 体质: S.属性.体质, 智力: S.属性.智力 };
+
+    var btn = el.querySelector('#ae-o-start');
+    if (btn) btn.disabled = true;
+    报('正在写入…');
+
+    /* ① 写 chat 变量存档 */
+    Promise.resolve(updateVariablesWith(function (v) { v['艾瑟兰'] = g; return v; }, { type: 'chat' }))
+      /* ② 开场白写入第 0 楼（若接口可用） */
+      .then(function () {
+        try {
+          if (typeof setChatMessages === 'function') {
+            return Promise.resolve(setChatMessages([{ message_id: 0, message: 文本 }], { refresh: 'all' })).catch(function () {});
+          }
+        } catch (e) {}
+      })
+      /* ③ 快照同步（剥 累计分钟）到第 0 楼与最新楼 */
+      .then(function () {
+        var snap = JSON.parse(JSON.stringify(g));
+        if (snap['时刻']) delete snap['时刻']['累计分钟'];
+        var ids = [0];
+        try { var last = (typeof getLastMessageId === 'function') ? getLastMessageId() : -1; if (last > 0) ids.push(last); } catch (e) {}
+        return ids.reduce(function (p, id) {
+          return p.then(function () {
+            return Promise.resolve(updateVariablesWith(function (v) {
+              v.stat_data = v.stat_data || {}; v.stat_data['艾瑟兰'] = snap; return v;
+            }, { type: 'message', message_id: id })).catch(function () {});
+          });
+        }, Promise.resolve());
+      })
+      .then(function () {
+        已开局 = true;
+        el.innerHTML = '<h3>艾瑟兰战役 · 开局</h3>'
+          + '<div class="sec done"><h4>✓ 开局完成</h4>'
+          + '<div class="sub">性别：' + esc(S.性别) + '　属性：力' + S.属性.力量 + ' 敏' + S.属性.敏捷 + ' 体' + S.属性.体质 + ' 智' + S.属性.智力 + '<br>'
+          + '存档已写入 chat 变量 <code>艾瑟兰</code>，开场白已写入第 0 楼，快照已同步。</div></div>'
+          + '<div class="sub">下一步：直接开始对话，数据AI 会从正文提取状态变化。</div>';
+        try { toastr && toastr.success && toastr.success('开局完成'); } catch (e) {}
+      })
+      .catch(function (e) {
+        报('写入失败：' + e, 'var(--bad)');
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  if (!默认存档) {
+    el.innerHTML = '（艾瑟兰开局：模板缺失 —— 请先 node build.mjs 重新产出本页）';
+    return;
+  }
+  if (typeof getVariables !== 'function') {
+    el.innerHTML = '<div class="warnbar">未检测到酒馆助手环境：本页在酒馆楼层内由正则注入时可正常使用；当前为本地预览。</div>';
+  }
+  渲染();
+})();
+</script>
+</body>
+</html>

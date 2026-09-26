@@ -1,5 +1,5 @@
 {
-  "display_name": "渐变带 · 自由回路",
+  "display_name": "艾瑟兰战役（多模式合集）",
   "loading_order": 102,
   "requires": [
     "TavernHelper"
@@ -7,9 +7,9 @@
   "optional": [],
   "js": "dist/index.js",
   "css": "dist/index.css",
-  "author": "opening-framework",
-  "version": "1.8.9",
-  "homePage": "https://github.com/four-nine49/jianbian-card",
+  "author": "four-nine49",
+  "version": "1.0.0",
+  "homePage": "https://github.com/four-nine49/zhanyi",
   "auto_update": true,
-  "description": "渐变带自由回路施法系统（开局框架版）：六表数据引擎+三AI管线+开局面板与状态栏+表格/AI填表/数据同步。"
+  "description": "艾瑟兰战役（第一卷·维尔伦沦陷沙盘）变量管理扩展：回合数据AI结算+算力/时钟/物品/生物九人建档+状态栏与开局面板；另含渐变带·自由回路与剑与汽水两条既有业务线（悬浮窗三模式切换）。"
 }

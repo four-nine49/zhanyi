@@ -40,8 +40,8 @@ export const OfSettingsSchema = z.object({
   // ── 数据同步 ──
   autoSyncEnabled: z.boolean().default(true),  // 收到 AI 回复 / 填表完成后自动同步到楼层变量（默认开）
   statusPlaceholderEnabled: z.boolean().default(true), // AI 回复末尾追加 <StatusPlaceHolderImpl/>（状态栏锚点，默认开）
-  // ── 模式（剑与汽水 / 渐变带）：侧栏按模式过滤显示 ──
-  appMode: z.enum(['presets', 'gradband']).default('presets'),
+  // ── 模式（剑与汽水 / 渐变带 / 艾瑟兰战役）：侧栏按模式过滤显示 ──
+  appMode: z.enum(['presets', 'gradband', 'aiselan']).default('presets'),
 });
 
 export type OfSettings = z.infer<typeof OfSettingsSchema>;

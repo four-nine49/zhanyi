@@ -92,13 +92,13 @@ async function run() {
   const t0 = Date.now();
   await esbuild.build(options);
   extractCss();
-  emitHtml();
+  await emitHtml();
   const size = readFileSync(JS_OUT, 'utf8').length;
   console.log(`[build] done in ${Date.now() - t0}ms → dist/index.js (${(size / 1024).toFixed(1)} KB)`);
 }
 
 /** 产出独立的开局/状态栏 HTML 交付物（引擎已内联，可直接放进正则替换或手动打开） */
-function emitHtml() {
+async function emitHtml() {
   const eng = resolve(__dirname, 'src', 'gradband', 'engine', 'circuit-engine.js');
   const assets = resolve(__dirname, 'src', 'gradband', 'assets');
   const engine = readFileSync(eng, 'utf8');
@@ -114,6 +114,39 @@ function emitHtml() {
     const file = resolve(OUTDIR, outName);
     writeFileSync(file, out, 'utf8');
     console.log(`[build] ${file} (${(out.length / 1024).toFixed(1)} KB)`);
+  }
+
+  // 艾瑟兰战役状态栏（毛坯版）：无引擎依赖，直接产出（配套 scripts/gen-aiselan-regex.mjs）
+  const aeTpl = readFileSync(resolve(__dirname, 'src', 'aiselan', 'assets', 'aiselan-statusbar.html'), 'utf8');
+  const aeFile = resolve(OUTDIR, '艾瑟兰状态栏.html');
+  writeFileSync(aeFile, aeTpl, 'utf8');
+  console.log(`[build] ${aeFile} (${(aeTpl.length / 1024).toFixed(1)} KB)`);
+
+  // 艾瑟兰战役开局面板：注入 schema.ts 的「开局存档」默认档（单一事实来源）
+  // 源文件写的是 `var 默认存档 = /*@DEFAULT_SAVE@*/ null;`——未替换时（直接开源文件）退化为 null 仍合法；
+  // 构建时连同 " null" 一起替换，避免残留成 `{...} null` 语法错误。
+  const 默认存档 = await loadDefaultSave();
+  const aoTpl = readFileSync(resolve(__dirname, 'src', 'aiselan', 'assets', 'aiselan-opening.html'), 'utf8');
+  const aoOut = aoTpl.replace('/*@DEFAULT_SAVE@*/ null', () => JSON.stringify(默认存档));
+  if (aoOut.includes('@DEFAULT_SAVE@')) throw new Error('开局面板模板占位符替换失败（检查源文件写法）');
+  const aoFile = resolve(OUTDIR, '艾瑟兰开局.html');
+  writeFileSync(aoFile, aoOut, 'utf8');
+  console.log(`[build] ${aoFile} (${(aoOut.length / 1024).toFixed(1)} KB)`);
+}
+
+/** 从 src/aiselan/core/schema.ts 打包出「开局存档」默认档（注入开局面板 HTML） */
+async function loadDefaultSave() {
+  const { outputFiles } = await esbuild.build({
+    entryPoints: [resolve(SRC, 'aiselan', 'core', 'schema.ts')],
+    bundle: true, format: 'esm', platform: 'node', write: false, charset: 'utf8', logLevel: 'silent',
+  });
+  const tmp = resolve(OUTDIR, '.schema.tmp.mjs');
+  writeFileSync(tmp, outputFiles[0].text, 'utf8');
+  try {
+    const mod = await import(pathToFileURL(tmp).href);
+    return mod.开局存档 ?? null;
+  } finally {
+    rmSync(tmp, { force: true });
   }
 }
 

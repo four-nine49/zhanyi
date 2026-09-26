@@ -9,6 +9,8 @@ import { renderJianbandaiPage } from './pages/jianbandai-opening';
 import { renderGradbandPage } from './pages/gradband';
 import { renderGradbandPromptsPage } from './pages/gradband-prompts';
 import { renderGradbandDataPage } from './pages/gradband-data';
+import { renderAiselanPage } from './pages/aiselan';
+import { renderAiselanPromptsPage } from './pages/aiselan-prompts';
 import { renderChatPage } from './pages/chat';
 import { renderTablesPage } from './pages/tables';
 import { renderSheetConfigPage } from './pages/sheet-config';
@@ -18,7 +20,7 @@ import { renderApiPage } from './pages/api';
 import { renderToolsPage } from './pages/tools';
 import { loadSettings, saveSetting } from '../core/settings';
 
-export type AppMode = 'presets' | 'gradband';
+export type AppMode = 'presets' | 'gradband' | 'aiselan';
 
 export interface PageDef {
   name: string;
@@ -51,6 +53,15 @@ export const PAGES: PageDef[] = [
   { name: 'api', label: 'API', order: 35, render: renderApiPage, modes: ['gradband'] },
   { name: 'settings', label: '设置', order: 40, render: renderSettingsPage, modes: ['gradband'] },
   { name: 'tools', label: '工具', order: 90, render: renderToolsPage, modes: ['gradband'] },
+
+  // ── 艾瑟兰战役模式 ──
+  { name: 'aiselan', label: '艾瑟兰战役', order: 6, render: renderAiselanPage, modes: ['aiselan'] },
+  { name: 'aiselan-prompts', label: '战役·提示词', order: 7, render: renderAiselanPromptsPage, modes: ['aiselan'] },
+  { name: 'tables', label: '表格数据', order: 20, render: renderTablesPage, modes: ['aiselan'] },
+  { name: 'sheetconf', label: '表结构/配置', order: 30, render: renderSheetConfigPage, modes: ['aiselan'] },
+  { name: 'api', label: 'API', order: 35, render: renderApiPage, modes: ['aiselan'] },
+  { name: 'settings', label: '设置', order: 40, render: renderSettingsPage, modes: ['aiselan'] },
+  { name: 'tools', label: '工具', order: 90, render: renderToolsPage, modes: ['aiselan'] },
 ];
 
 let currentName = 'start';
@@ -82,6 +93,7 @@ export function mountApp(root: HTMLElement): void {
     <div class="of-modepicker" id="of-modepicker">
       <button class="of-modebtn" data-mode="presets">剑与汽水</button>
       <button class="of-modebtn" data-mode="gradband">渐变带</button>
+      <button class="of-modebtn" data-mode="aiselan">战役</button>
     </div>
     <nav class="of-nav" id="of-nav"></nav>
     <button class="of-collapse" id="of-collapse">◀</button>

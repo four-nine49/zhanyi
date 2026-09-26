@@ -16,6 +16,7 @@ import { initStatusPlaceholderIfEnabled } from './sync/status-placeholder';
 import { loadSettings as loadBusinessSettings } from './store/settings';
 import { mountApp, refreshCurrent } from './ui/app';
 import { initGradband, destroyGradband } from './gradband/index';
+import { initAiselan, destroyAiselan } from './aiselan/index';
 
 const INSTANCE_KEY = '__OPENING_FRAMEWORK_INSTANCE__';
 const TOGGLE_ID = 'of-toggle';
@@ -55,12 +56,13 @@ async function doInitialize(): Promise<void> {
     resetFloorCount(); // 楼层计数是内存态；对话状态存 chat 变量，天然按聊天隔离
   }).stop);
 
-  // 6. 启动自动填表 / 自动数据同步 / 状态栏标记 / 渐变带业务（按设置）
+  // 6. 启动自动填表 / 自动数据同步 / 状态栏标记 / 渐变带 + 艾瑟兰战役业务（按设置；各自由存档存在与否静默把关）
   const settings = loadBusinessSettings();
   if (settings.autoFillEnabled) startAutoFill();
   initAutoSyncIfEnabled();
   initStatusPlaceholderIfEnabled();
   void initGradband();
+  void initAiselan();
 
   const inst = (window as any)[INSTANCE_KEY];
   if (inst) inst.status = 'ready';
@@ -104,9 +106,10 @@ function destroy(): void {
   // 1. 注销 Slash 命令
   unregisterSlashCommands();
 
-  // 2. 停止自动填表 + 渐变带业务 + 清理事件监听器
+  // 2. 停止自动填表 + 渐变带/艾瑟兰业务 + 清理事件监听器
   stopAutoFill();
   destroyGradband();
+  destroyAiselan();
   eventManager.dispose();
 
   // 3. 移除 DOM（根容器含窗口 + 悬浮按钮）

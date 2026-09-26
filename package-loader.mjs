@@ -21,9 +21,9 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// CDN 拉取的 GitHub 仓库（https://github.com/four-nine49/chajian123）
+// CDN 拉取的 GitHub 仓库（https://github.com/four-nine49/zhanyi）
 const REPO_OWNER = 'four-nine49';
-const REPO_NAME = 'jianbian-card';
+const REPO_NAME = 'zhanyi';
 
 // 版本与 manifest.json 同步：tags API 拉不到时回退到 v(manifest.version)
 const manifest = JSON.parse(readFileSync(resolve(__dirname, 'manifest.json'), 'utf8'));
@@ -133,10 +133,10 @@ if (initialBlockReason) {
 const script = {
   type: 'script',
   enabled: false, // 与玉子一致：导入后手动启用（避免与扩展版同时开启）
-  name: '开局框架（自动更新）',
-  id: '3f03a57c-2fdb-4f8a-9361-b15c13f3927a',
+  name: '艾瑟兰战役（自动更新）',
+  id: '10ba63e3-ad25-4c73-9754-3d94a59a3f43',
   content: loader,
-  info: '开局框架（酒馆助手脚本版）：与扩展版共用同一份 dist 产物，从 CDN 拉取并注入主页面，自动跟随最新 tag。请勿与扩展版同时启用。',
+  info: '艾瑟兰战役（酒馆助手脚本版）：与扩展版共用同一份 dist 产物，从 CDN 拉取并注入主页面，自动跟随最新 tag。请勿与扩展版同时启用。',
   button: { enabled: false, buttons: [] },
   data: {},
   export_with: { data: true, button: true },
@@ -144,7 +144,7 @@ const script = {
 
 const outDir = resolve(__dirname, 'releases');
 mkdirSync(outDir, { recursive: true });
-const out = resolve(outDir, '酒馆助手脚本-开局.json');
+const out = resolve(outDir, '酒馆助手脚本-战役.json');
 writeFileSync(out, JSON.stringify(script, null, 2), 'utf8');
 
 // ── 自检（对照玉子手机 check-script-loader-contract.cjs 的关键契约）──

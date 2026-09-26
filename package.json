@@ -1,7 +1,7 @@
 {
-  "name": "opening-framework-extension",
-  "version": "1.8.9",
-  "description": "开局框架 - SillyTavern 扩展（带窗口和悬浮窗）",
+  "name": "zhanyi-extension",
+  "version": "1.0.0",
+  "description": "艾瑟兰战役 - SillyTavern 扩展（战役/渐变带/剑与汽水 三模式，带窗口和悬浮窗）",
   "type": "module",
   "private": true,
   "scripts": {
@@ -9,7 +9,10 @@
     "dev": "node build.mjs --watch",
     "check": "tsc --noEmit",
     "loader": "node package-loader.mjs",
-    "smoke": "node smoke.mjs"
+    "smoke": "node smoke.mjs",
+    "test": "node scripts/test-aiselan.mjs && node scripts/test-aiselan-statusbar.mjs",
+    "gen:regex": "node scripts/gen-aiselan-regex.mjs",
+    "gen:preview": "node scripts/gen-aiselan-previews.mjs"
   },
   "dependencies": {
     "zod": "^3.23.8"
