@@ -109,7 +109,7 @@ export const 生物Schema = z.object({
   装备: 装备块Schema.optional(),                 // 仅 爱丽丝 有（核心人物）
 });
 
-/* ── 九名建档对象（开局全量预设，属性取自沙盘文档）── */
+/* ── 八名建档对象（开局全量预设，属性取自沙盘文档）── */
 export const 生物建档Schema = z.object({
   // —— 同伴（可招募）——
   爱丽丝: 生物Schema.extend({
