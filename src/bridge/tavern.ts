@@ -147,17 +147,43 @@ export function updateVariablesWith(
 // 消息（楼层）操作
 // ──────────────────────────────────────────────
 
+/**
+ * 归一化一条楼层消息。
+ *
+ * ⚠️ 关键：TavernHelper 的 `getChatMessages` 返回的 ChatMessage **没有 `is_user` 字段**（只有 `role`），
+ * 而 SillyTavern 原生 `chat[]` 才有 `is_user`。本扩展下游（取正文分层【玩家】/【AI】、填表取轮、
+ * 状态栏标记补楼、对话页渲染）**一律按 `m.is_user` 判定**，所以这里必须把 `is_user` 补出来，
+ * 否则用户消息会被当成 AI 消息（表现为：正文里用户的话也标成【AI】、填表轮数失效）。
+ *
+ * 兼容两种情况：给了 `is_user` 就用它；只给 `role` 就按 `role === 'user'` 推。
+ */
+function normalizeMessage(m: any, fallbackId: number): ChatMessage {
+  const role = m?.role;
+  const isUser = m?.is_user === true || role === 'user';
+  return {
+    ...(m && typeof m === 'object' ? m : {}),
+    message_id: typeof m?.message_id === 'number' ? m.message_id : fallbackId,
+    name: m?.name ?? '',
+    role: (role === 'system' || role === 'user' || role === 'assistant') ? role : (isUser ? 'user' : 'assistant'),
+    is_user: isUser,
+    is_hidden: !!m?.is_hidden,
+    message: String(m?.message ?? m?.mes ?? ''),
+  } as ChatMessage;
+}
+
 export function getChatMessages(range: string | number, option?: any): ChatMessage[] {
   const fn = method<(r: any, o?: any) => any[]>('getChatMessages');
-  if (fn) { try { return (fn(range, option) ?? []) as ChatMessage[]; } catch (e) { console.error('[开局框架] getChatMessages 失败', e); return []; } }
+  if (fn) {
+    try {
+      const raw = (fn(range, option) ?? []) as any[];
+      return raw.map((m, i) => normalizeMessage(m, i));
+    } catch (e) { console.error('[开局框架] getChatMessages 失败', e); return []; }
+  }
   try {
     // SillyTavern 原生 fallback：chat 数组
     const st = (window as any).SillyTavern;
     if (st && Array.isArray(st.chat)) {
-      return st.chat.map((m: any, i: number) => ({
-        message_id: i, name: m.name, role: m.is_user ? 'user' : 'assistant',
-        is_user: !!m.is_user, is_hidden: !!m.is_hidden, message: m.mes,
-      })) as ChatMessage[];
+      return st.chat.map((m: any, i: number) => normalizeMessage({ ...m, message_id: i, message: m.mes }, i)) as ChatMessage[];
     }
   } catch { /* 忽略 */ }
   console.error('[开局框架] getChatMessages 不可用');

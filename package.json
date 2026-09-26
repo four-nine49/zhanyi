@@ -1,6 +1,6 @@
 {
   "name": "zhanyi-extension",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "艾瑟兰战役 - SillyTavern 扩展（战役/渐变带/剑与汽水 三模式，带窗口和悬浮窗）",
   "type": "module",
   "private": true,

@@ -77,19 +77,24 @@ export function 清洗单轮正文(raw: string, opts: RecentOpts = {}): string {
   return text.slice(0, max);
 }
 
-/** 按"轮"取最近正文（默认 4 轮；剥掉状态栏标记与 HTML 码块、可按需过滤/限长），返回按时间正序的轮数组 */
+/**
+ * 按"轮"取最近正文，返回按时间正序的**轮**数组。
+ * **1 轮 = 一条玩家输入 + 其后的一条/多条 AI 回复**（与设置页/文档口径一致）。
+ * 分组规则：遇到玩家消息即开启新一轮；开头若有不带玩家消息的 AI 楼（如第 0 楼开场），自成一"轮"。
+ */
 function recentRounds(maxRounds: number, opts: RecentOpts = {}): string[] {
   const msgs = getChatMessages('0-{{lastMessageId}}') || [];
-  const rounds: string[] = [];
-  let count = 0;
-  for (let i = msgs.length - 1; i >= 0 && count < maxRounds; i--) {
-    const m = msgs[i];
+  const 组: string[][] = [];
+  let cur: string[] = [];
+  for (const m of msgs) {
     const text = 清洗单轮正文(m.message || '', opts);
     if (!text) continue;
-    rounds.unshift((m.is_user ? '【玩家】' : '【AI】') + text);
-    if (!m.is_user) count++;   // 一个 AI 楼算一轮结束
+    const 是用户 = !!m.is_user;
+    if (是用户 && cur.length) { 组.push(cur); cur = []; }   // 玩家消息 = 新一轮开始
+    cur.push((是用户 ? '【玩家】' : '【AI】') + text);
   }
-  return rounds;
+  if (cur.length) 组.push(cur);
+  return 组.slice(Math.max(0, 组.length - Math.max(1, maxRounds))).map(g => g.join('\n'));
 }
 
 /** 最近正文（平铺） */
@@ -101,6 +106,7 @@ export function recentStory(maxRounds = 4, opts: RecentOpts = {}): string {
  * 分层正文（数据AI 用）：前文背景 + 本轮待结算正文。
  * 理由：只给 1 轮会丢玩家施法意图（跨回合生效）；无差别给多轮会导致"历史重复清算/回声结算"（前几轮动作被重复提取）。
  * 解法：背景轮仅供理解意图/因果/时间差，最新一轮单独标记为唯一提取源（配合提示词"事件范围铁律"）。
+ * 最新一轮 = 玩家最新输入 + 其对应的 AI 回复（二者同属本轮，玩家说了多久/做了什么要能被算到 Δt）。
  */
 export function recentStoryLayered(maxRounds = 4, opts: RecentOpts = {}): { bg: string; latest: string } {
   const rounds = recentRounds(maxRounds, opts);
