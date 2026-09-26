@@ -117,7 +117,8 @@ async function emitHtml() {
   }
 
   // 艾瑟兰战役状态栏（毛坯版）：无引擎依赖，直接产出（配套 scripts/gen-aiselan-regex.mjs）
-  const aeTpl = readFileSync(resolve(__dirname, 'src', 'aiselan', 'assets', 'aiselan-statusbar.html'), 'utf8');
+  // 图片一律构建期内联成 data URI（本地不联网）：源图放 src/aiselan/assets/img/，HTML 里写 IMG 占位符（见下方 inlineImages）
+  const aeTpl = inlineImages(readFileSync(resolve(__dirname, 'src', 'aiselan', 'assets', 'aiselan-statusbar.html'), 'utf8'));
   const aeFile = resolve(OUTDIR, '艾瑟兰状态栏.html');
   writeFileSync(aeFile, aeTpl, 'utf8');
   console.log(`[build] ${aeFile} (${(aeTpl.length / 1024).toFixed(1)} KB)`);
@@ -132,6 +133,20 @@ async function emitHtml() {
   const aoFile = resolve(OUTDIR, '艾瑟兰开局.html');
   writeFileSync(aoFile, aoOut, 'utf8');
   console.log(`[build] ${aoFile} (${(aoOut.length / 1024).toFixed(1)} KB)`);
+}
+
+// 把 HTML 里的 IMG 占位符（形如 块注释起 空格 IMG:文件名 空格 块注释止）替换成 data URI：源图 src/aiselan/assets/img/
+function inlineImages(html) {
+  const imgDir = resolve(__dirname, 'src', 'aiselan', 'assets', 'img');
+  return html.replace(/\/\*@IMG:([^*@]+)@\*\//g, (_m, name) => {
+    const file = resolve(imgDir, name.trim());
+    if (!existsSync(file)) throw new Error(`内联图片缺失：${file}（HTML 占位符 /*@IMG:${name.trim()}@*/）`);
+    const ext = (name.split('.').pop() || '').toLowerCase();
+    const mime = { webp: 'image/webp', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', svg: 'image/svg+xml' }[ext] || 'application/octet-stream';
+    const b64 = readFileSync(file).toString('base64');
+    console.log(`[build] 内联图片 ${name.trim()} → ${(b64.length / 1024).toFixed(0)} KB base64`);
+    return `data:${mime};base64,${b64}`;
+  });
 }
 
 /** 从 src/aiselan/core/schema.ts 打包出「开局存档」默认档（注入开局面板 HTML） */

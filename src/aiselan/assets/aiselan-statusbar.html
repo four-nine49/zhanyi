@@ -34,6 +34,9 @@
   #aiselan-bar .cell.on.s2{background:#e5c07b;border-color:#e5c07b;}
   #aiselan-bar .sub{font-size:11px;color:var(--dim);}
   #aiselan-bar .num{color:#8a94a6;font-family:Consolas,monospace;font-size:11px;}
+  #aiselan-bar .ae-map{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:6px;cursor:zoom-in;}
+  #aiselan-bar .ae-map.full{position:fixed;left:0;right:0;top:0;bottom:0;width:100%;height:100%;
+    object-fit:contain;background:#05070a;z-index:99999;border:0;border-radius:0;cursor:zoom-out;padding:8px;}
   #aiselan-bar .eqbtn.del{color:#e88a8a;}
   #aiselan-bar .eqbtn.del:hover{border-color:#e88a8a;}
   #aiselan-bar .eqbtn{border:1px solid var(--line);background:#1c2531;color:#9ecbff;border-radius:4px;
@@ -51,6 +54,8 @@
   /* 界面状态（仅本页内存，重渲染保留、刷新页面重置） */
   var 删除模式 = false;      // 开启后才在物品旁显示「删除」
   var 物品折叠 = false;      // 物品区折叠（东西多时收起来）
+  var 地图展开 = false;      // 地图卡片展开（默认收起，避免每层都解码大图）
+  var 地图全屏 = false;      // 地图全屏查看
   var 阶段名 = ['风暴眼', '混乱期', '混乱期', '沦陷期·水源带毒', '沦陷期·焚城', '收束期·幼体降临', '终局·火炮洗地'];
   var 肃清名 = ['追查中', '锁定玩家', '围捕', '全域神圣轰炸'];
   var 属性名 = ['力量', '敏捷', '体质', '智力'];
@@ -222,6 +227,17 @@
       + '<span class="badge ' + 世界cls + '">' + 世界 + '</span>'
       + '</div></div>');
 
+    /* 地图（图片由 build.mjs 内联成 data URI，本地不联网；默认收起，展开才解码） */
+    h.push('<div class="card"><h4 style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">地图'
+      + '<button class="eqbtn" data-map="1">' + (地图展开 ? '收起地图' : '显示地图') + '</button>'
+      + (地图展开 ? '<button class="eqbtn" data-mapfull="1">' + (地图全屏 ? '退出全屏' : '全屏查看') + '</button>' : '')
+      + '</h4>'
+      + (地图展开
+          ? '<img class="ae-map' + (地图全屏 ? ' full' : '') + '" alt="维尔伦战术地图" loading="lazy" src="/*@IMG:地图.webp@*/">'
+            + (地图全屏 ? '' : '<div class="sub muted">点图片可全屏查看；图片已内联，不联网</div>')
+          : '<span class="sub muted">（点「显示地图」查看维尔伦战术地图：四大绝路 + 唯一生路 + 六大节点）</span>')
+      + '</div>');
+
     /* 时钟 */
     var 陷 = (g.时钟 && g.时钟.维尔伦陷落度) || 0;
     var 肃 = (g.时钟 && g.时钟.教会肃清进度) || 0;
@@ -376,9 +392,12 @@
     el._aeEquipWired = true;
     el.addEventListener('click', function (e) {
       var t = e.target;
-      // 纯界面开关：折叠 / 删除模式（不写存档）
+      // 纯界面开关：折叠 / 删除模式 / 地图（不写存档）
       if (t && t.getAttribute && t.getAttribute('data-fold')) { 物品折叠 = !物品折叠; main(); return; }
       if (t && t.getAttribute && t.getAttribute('data-delmode')) { 删除模式 = !删除模式; main(); return; }
+      if (t && t.getAttribute && t.getAttribute('data-map')) { 地图展开 = !地图展开; 地图全屏 = false; main(); return; }
+      if (t && t.getAttribute && t.getAttribute('data-mapfull')) { 地图全屏 = !地图全屏; main(); return; }
+      if (t && t.classList && t.classList.contains('ae-map')) { 地图全屏 = !地图全屏; main(); return; }
 
       var 装备编号 = t && t.getAttribute && t.getAttribute('data-equip');
       var 使用编号 = t && t.getAttribute && t.getAttribute('data-use');
@@ -398,7 +417,8 @@
   }
   /* 暴露纯函数供自测（scripts/test-aiselan-statusbar.mjs） */
   try { window.__AI_EQUIP__ = { 装备物品: 装备物品, 卸下装备: 卸下装备, 可装物品: 可装物品, 使用消耗品: 使用消耗品, 删除物品: 删除物品, writeGame: writeGame,
-  设置删除模式: function (v) { 删除模式 = !!v; main(); }, 设置物品折叠: function (v) { 物品折叠 = !!v; main(); } }; } catch (e) {}
+  设置删除模式: function (v) { 删除模式 = !!v; main(); }, 设置物品折叠: function (v) { 物品折叠 = !!v; main(); },
+  设置地图展开: function (v) { 地图展开 = !!v; main(); }, 设置地图全屏: function (v) { 地图全屏 = !!v; main(); } }; } catch (e) {}
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', main);
   } else {

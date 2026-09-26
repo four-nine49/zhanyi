@@ -88,8 +88,6 @@ const SCHEMA = {
           additionalProperties: false,
         },
       },
-      物品移除: { type: 'array', items: { type: 'string' } },
-      物品数量: { type: 'object', additionalProperties: { type: 'integer' }, description: '物品名 → 增量，如 {"治疗药剂": -1}' },
       技能新增: {
         type: 'array',
         items: {

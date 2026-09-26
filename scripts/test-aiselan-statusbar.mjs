@@ -121,6 +121,22 @@ console.log('— 界面开关（删除模式 / 物品折叠）—');
   has('展开后恢复明细', '硝石 — 爆破原料');
 }
 
+console.log('— 地图卡片（内联图 / 折叠 / 全屏）—');
+{
+  const E = sandbox.window.__AI_EQUIP__;
+  has('地图卡片存在', 'data-map="1"');
+  hasNot('默认收起时不加载地图大图', 'data:image/webp');
+  E.设置地图展开(true);
+  has('展开后出现内联地图（data URI）', 'data:image/webp;base64,');
+  has('地图 img 标签', 'class="ae-map"');
+  has('提示不联网', '图片已内联，不联网');
+  E.设置地图全屏(true);
+  has('全屏类生效', 'ae-map full');
+  E.设置地图全屏(false);
+  E.设置地图展开(false);
+  hasNot('收起后不再渲染大图', 'data:image/webp');
+}
+
 console.log('— 装备穿脱纯函数 —');
 {
   const E = sandbox.window.__AI_EQUIP__;

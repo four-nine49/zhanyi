@@ -8,7 +8,7 @@
   "js": "dist/index.js",
   "css": "dist/index.css",
   "author": "four-nine49",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "homePage": "https://github.com/four-nine49/zhanyi",
   "auto_update": true,
   "description": "艾瑟兰战役（第一卷·维尔伦沦陷沙盘）变量管理扩展：回合数据AI结算+算力/时钟/物品/生物九人建档+状态栏与开局面板；另含渐变带·自由回路与剑与汽水两条既有业务线（悬浮窗三模式切换）。"

@@ -111,6 +111,11 @@ node scripts/gen-aiselan-regex.mjs    # 由 dist 生成两条战役正则包
 node scripts/gen-aiselan-previews.mjs # 生成 美术预览/ 两个本地预览页（免酒馆）
 ```
 
+> 图片（如状态栏地图）放 `src/aiselan/assets/img/`，HTML 里用 IMG 占位符，`node build.mjs` 会**构建期内联成 data URI**（不联网）；换图只需替换同名文件后重建。
+
+```bash
+```
+
 **发版流程**：版本三处同步（`src/core/version.ts` + `manifest.json` + `package.json`）→ build/check/smoke →
 `node package-loader.mjs` → 提交推送 → `git tag vX.Y.Z && git push origin vX.Y.Z`（只推新 tag，
 别把历史 tag 全推，加载器按最新 tag 拉产物）。改了 `dist/` 里的 HTML → 重新生成 `json/regex-*.json` 并让用户重导。
