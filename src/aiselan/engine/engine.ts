@@ -4,6 +4,7 @@
 // 所有函数为纯函数：输入旧 Game + 参数，输出新 Game（不修改入参）。
 // 规则来源：《变量设计.md》§四 与 《艾瑟兰设定集.md》「系统算力规则（第一卷）」。
 import type { Game, 生物, 临时加成, 物品, 技能 } from '../core/schema';
+import { 关系阶段 } from '../core/schema';
 
 /* ═══════════════════════════════════════════════════════════════
    派生量（不存储，现算）
@@ -312,11 +313,16 @@ export function 结算技能移除(
   return 新g;
 }
 
-/** 生物字段更新（已遇见/状态/属性增量） */
+/** 生物字段更新（已遇见/状态/和主角的关系/属性增量） */
 export function 结算生物(
   g: Game,
   名: keyof Game['生物'],
-  更新: { 已遇见?: boolean; 状态?: string; 属性?: Partial<Record<'力量' | '敏捷' | '体质' | '智力', number>> },
+  更新: {
+    已遇见?: boolean;
+    状态?: string;
+    和主角的关系?: string;
+    属性?: Partial<Record<'力量' | '敏捷' | '体质' | '智力', number>>;
+  },
 ): Game {
   let 新g: Game = JSON.parse(JSON.stringify(g));
   const 对象 = 新g.生物[名];
@@ -324,6 +330,9 @@ export function 结算生物(
 
   if (更新.已遇见 === true) 对象.已遇见 = true;   // 只能 false→true
   if (更新.状态 != null) 对象.状态 = 更新.状态;
+  if (更新.和主角的关系 != null && (关系阶段.options as readonly string[]).includes(更新.和主角的关系)) {
+    对象.和主角的关系 = 更新.和主角的关系 as typeof 对象.和主角的关系;
+  }
   if (更新.属性) {
     for (const [k, v] of Object.entries(更新.属性)) {
       const 属性名 = k as '力量' | '敏捷' | '体质' | '智力';

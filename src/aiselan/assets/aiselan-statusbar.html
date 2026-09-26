@@ -184,6 +184,8 @@
       var 临时 = (b.临时加成 || []).length
         ? '　临时：' + b.临时加成.map(function (t) { return 属性名.indexOf(t.属性) >= 0 ? (t.属性 + (t.值 > 0 ? '+' : '') + t.值) : ''; }).join('、')
         : '';
+      var 关系 = (b.立场 === '同伴' && b['和主角的关系'])
+        ? '<div class="sub">关系：<b>' + esc(b['和主角的关系']) + '</b></div>' : '';
       var 技能 = (b.技能 || []).length
         ? '<div class="sub">技能：' + b.技能.map(function (s) { return esc(s.名称) + '(' + esc(s.等阶) + ')'; }).join('、') + '</div>' : '';
       return '<div class="unit' + (死 ? ' dead' : '') + '">'
@@ -191,6 +193,7 @@
         + '<div class="sub">力' + 属性文本(g, b, '力量') + ' 敏' + 属性文本(g, b, '敏捷')
         + ' 体' + 属性文本(g, b, '体质') + ' 智' + 属性文本(g, b, '智力') + 临时 + '</div>'
         + (b.状态 && !死 ? '<div class="sub">状态：' + esc(b.状态) + '</div>' : '')
+        + 关系
         + 技能 + '</div>';
     }
     h.push('<div class="card"><h4>已遇见</h4>'

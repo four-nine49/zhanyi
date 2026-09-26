@@ -145,14 +145,21 @@ export function settle(旧g: Game, 包: 变更包): 结算结果 {
 
   // ── 10. 生物 ──
   if (包.生物) {
-    for (const [名, 更新] of Object.entries(包.生物)) {
+    const 关系白名单 = ['路人', '相识', '熟人', '恋人', '灵魂的另一半'];
+    for (const [名, 更新原] of Object.entries(包.生物)) {
       if (!(名 in g.生物)) { 丢弃.push(`生物「${名}」不在建档列表`); continue; }
+      let 更新 = 更新原;
+      if (更新.和主角的关系 != null && !关系白名单.includes(更新.和主角的关系)) {
+        丢弃.push(`生物「${名}」和主角的关系取值非法（${更新.和主角的关系}），已忽略该字段`);
+        更新 = { ...更新, 和主角的关系: undefined };
+      }
       const 旧已遇见 = g.生物[名 as keyof Game['生物']].已遇见;
       g = 结算生物(g, 名 as keyof Game['生物'], 更新);
       const 新对象 = g.生物[名 as keyof Game['生物']];
       const 变化: string[] = [];
       if (更新.已遇见 === true && !旧已遇见) 变化.push('初遇');
       if (更新.状态 != null) 变化.push(`状态→"${更新.状态}"`);
+      if (更新.和主角的关系 != null) 变化.push(`关系→${更新.和主角的关系}`);
       if (更新.属性) 变化.push(`属性${JSON.stringify(更新.属性)}`);
       if (变化.length > 0) 日志.push(`生物「${名}」${变化.join('、')}`);
     }

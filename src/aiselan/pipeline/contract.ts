@@ -75,6 +75,8 @@ const 技能移除项 = z.object({
 const 生物更新项 = z.object({
   已遇见: z.boolean().optional(),
   状态: z.string().optional(),
+  // 取值白名单在 settle 里校验（非法值只丢该条不连坐整包；json_schema 已约束 AI 只能报枚举值）
+  和主角的关系: z.string().optional(),
   属性: 属性变化.optional(),
 });
 

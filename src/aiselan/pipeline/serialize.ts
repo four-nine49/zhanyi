@@ -33,7 +33,8 @@ export function serialize数据AI(g: Game): string {
   if (已遇见.length) {
     行.push('已遇见人物：' + 已遇见.map(([名, b]) => {
       const 临时 = b.临时加成.length ? `,临时:${b.临时加成.map(x => `${x.属性}${x.值 > 0 ? '+' : ''}${x.值}`).join('/')}` : '';
-      return `${名}(${b.立场},${b.状态 || '未知'}${临时})`;
+      const 关系 = b.立场 === '同伴' ? `,关系:${b.和主角的关系}` : '';
+      return `${名}(${b.立场},${b.状态 || '未知'}${关系}${临时})`;
     }).join('、'));
   } else {
     行.push('已遇见人物：（无）');

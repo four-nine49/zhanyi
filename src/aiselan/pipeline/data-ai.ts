@@ -138,6 +138,11 @@ const SCHEMA = {
           properties: {
             已遇见: { type: 'boolean', description: '只能 false→true' },
             状态: { type: 'string', description: '自由文本："在队"/"留守在协会"/"死亡"' },
+            和主角的关系: {
+              type: 'string',
+              enum: ['路人', '相识', '熟人', '恋人', '灵魂的另一半'],
+              description: '与主角的关系阶段；仅同伴立场申报，随剧情实质进展才会变，无进展不报',
+            },
             属性: {
               type: 'object',
               properties: {
