@@ -27,7 +27,7 @@ function makeEl(id) {
     releasePointerCapture() {},
     appendChild(child) { if (child && child.id) byId.set(child.id, child); el.childElementCount++; return child; },
     remove() { byId.delete(el.id); },
-    querySelector() { return makeEl(); },
+    querySelector(sel) { const el = makeEl(); if (sel === '#of-content') byId.set('of-content', el); return el; },
     querySelectorAll() { return []; },
     getBoundingClientRect() { return { left: 10, top: 10, width: 420, height: 660 }; },
     scrollTop: 0, scrollHeight: 0,
@@ -74,6 +74,14 @@ setTimeout(() => {
     if (!byId.has(id)) { console.error('[smoke] FAIL: DOM 缺失', id); process.exit(1); }
   }
   log('DOM 挂载齐全: of-root / of-window / of-toggle');
+
+  // 面板锁定校验：切换器只剩静态「艾瑟兰战役」标签，不得渲染其它模式切换按钮
+  const panelHtml = byId.get('of-content')?.innerHTML || '';
+  if (!panelHtml.includes('艾瑟兰战役')) { console.error('[smoke] FAIL: 面板未渲染战役模式标签'); process.exit(1); }
+  if (panelHtml.includes('data-mode="presets"') || panelHtml.includes('data-mode="gradband"')) {
+    console.error('[smoke] FAIL: 锁定模式下仍渲染了其它模式切换按钮'); process.exit(1);
+  }
+  log('面板已锁定战役模式（切换器只剩静态标签）');
 
   // 完整销毁
   try {

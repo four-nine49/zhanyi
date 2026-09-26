@@ -70,8 +70,14 @@ let navEl: HTMLElement | null = null;
 let modeEl: HTMLElement | null = null;
 let collapseState = false;
 
+/**
+ * 模式锁定（本仓库发行版）：非 null 时强制该模式——模式切换器只剩当前模式标签，其他模式隐藏且不可切换。
+ * 代码里三条业务线仍并存（剑与汽水/渐变带/战役），需要放开时把这里改回 null 即可。
+ */
+const 锁定模式: AppMode | null = 'aiselan';
+
 function currentMode(): AppMode {
-  return loadSettings().appMode ?? 'presets';
+  return 锁定模式 ?? (loadSettings().appMode ?? 'presets');
 }
 
 function visiblePages(): PageDef[] {
@@ -89,12 +95,16 @@ function disposeCurrentPage(): void {
 
 export function mountApp(root: HTMLElement): void {
   root.className = 'of-panel';
-  root.innerHTML = `
-    <div class="of-modepicker" id="of-modepicker">
+  // 模式锁定后切换器只显示当前模式标签（不可点击）；未锁定时是三按钮切换器
+  const 模式区 = 锁定模式
+    ? `<div class="of-modepicker" id="of-modepicker"><span class="of-modebtn on" style="cursor:default">艾瑟兰战役</span></div>`
+    : `<div class="of-modepicker" id="of-modepicker">
       <button class="of-modebtn" data-mode="presets">剑与汽水</button>
       <button class="of-modebtn" data-mode="gradband">渐变带</button>
       <button class="of-modebtn" data-mode="aiselan">战役</button>
-    </div>
+    </div>`;
+  root.innerHTML = `
+    ${模式区}
     <nav class="of-nav" id="of-nav"></nav>
     <button class="of-collapse" id="of-collapse">◀</button>
     <div class="of-content" id="of-page"></div>
@@ -106,15 +116,17 @@ export function mountApp(root: HTMLElement): void {
   modeEl = root.querySelector('#of-modepicker') as HTMLElement;
   const collapseBtn = root.querySelector('#of-collapse') as HTMLElement;
 
-  // 模式切换
+  // 模式切换（锁定模式下切换器只有静态标签，点击直接忽略）
   function renderModePicker() {
     if (!modeEl) return;
+    if (锁定模式) return;
     const m = currentMode();
     modeEl.querySelectorAll('.of-modebtn').forEach(b => {
       b.classList.toggle('on', b.getAttribute('data-mode') === m);
     });
   }
   modeEl.addEventListener('click', (e) => {
+    if (锁定模式) return;
     const btn = (e.target as HTMLElement).closest('[data-mode]');
     if (!btn) return;
     const next = btn.getAttribute('data-mode') as AppMode;
@@ -152,6 +164,11 @@ export function mountApp(root: HTMLElement): void {
     nav.style.display = collapseState ? 'none' : '';
     collapseBtn.textContent = collapseState ? '▶' : '◀';
   });
+
+  // 锁定模式：把 appMode 也写成锁定值，保证将来放开锁定时默认仍是战役
+  if (锁定模式 && loadSettings().appMode !== 锁定模式) {
+    try { saveSetting('appMode', 锁定模式); } catch { /* 忽略 */ }
+  }
 
   renderModePicker();
   renderNav();
